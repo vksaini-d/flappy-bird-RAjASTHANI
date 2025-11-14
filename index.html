@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Flappy Bird</title>
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Load Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 3. Custom CSS */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Simple pulse animation for the title */
+        .pulse-text {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: .7;
+                transform: scale(1.05);
+            }
+        }
+
+        /* Bird loader animation */
+        .loader-bird {
+            animation: flap-bounce 0.8s ease-in-out infinite;
+        }
+        @keyframes flap-bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Professional Text Overlay System */
+        .game-text-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 1rem 2rem;
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0; /* Start hidden */
+            pointer-events: none;
+            z-index: 30; /* Ensure it's on top */
+        }
+
+        /* Keyframe animation for text fly-in */
+        @keyframes game-text-fly-in {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5) translateY(50px);
+            }
+            20%, 70% { /* Fly in and hold */
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) translateY(0);
+            }
+            100% { /* Fade out */
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.1) translateY(0);
+            }
+        }
+
+        /* Class to trigger the animation */
+        .animate-fly-in {
+            animation: game-text-fly-in 2s ease-in-out forwards;
+        }
+        
+    </style>
+</head>
+<body class="h-full bg-gray-900 text-white overflow-hidden">
+
+    <!-- App container now has padding-bottom to avoid footer overlap -->
+    <div id="app-container" class="flex flex-col h-full pb-16">
+
+        <!-- Header -->
+        <header id="main-header" class="flex-shrink-0 bg-gray-800 p-3 shadow-lg z-20">
+            <div class="container mx-auto flex justify-between items-center max-w-7xl">
+                <h1 class="text-xl font-bold text-cyan-400">Modern Flappy Bird</h1>
+                <button id="pause-toggle-btn" class="hidden bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1 px-3 rounded-lg text-xs transition duration-200">Pause</button>
+                <div class="text-right text-xs">
+                    <div id="user-status" class="font-mono text-gray-400">Connecting...</div>
+                    <div class="font-semibold text-gray-200">Level: <span id="current-level-display" class="text-yellow-400">Easy</span></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="flex-grow relative overflow-hidden" id="game-container">
+            <!-- Canvas is inserted here by JS -->
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- UI Overlays -->
+            <div id="overlays" class="absolute inset-0 flex items-center justify-center z-10">
+
+                <!-- Loading Screen -->
+                <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md">
+                    <!-- Bird Loader -->
+                    <div id="loader-container" class="flex flex-col items-center justify-center">
+                        <!-- SVG will be injected here by JS -->
+                    </div>
+                    <p class="text-lg text-gray-300 mt-4">Authenticating with Firebase...</p>
+                </div>
+
+                <!-- Start Screen -->
+                <div id="start-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                    <!-- NEW: Responsive Font Size -->
+                    <h2 class="text-6xl sm:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-4 pulse-text">FLAPPY BIRD</h2>
+                    <p class="text-2xl text-yellow-400 mb-2">You are on level: <span id="start-level-display" class="font-bold"></span></p>
+                    <p class="text-lg text-gray-300 mb-6">Select your level to start:</p>
+                    <div id="level-select-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                        <!-- Level buttons will be injected here -->
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4">You can only play levels you have unlocked.</p>
+                    <p class="text-gray-400 text-lg">Click or Press 'Space' to Flap</p>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div id="game-over-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                    <!-- NEW: Responsive Font Size -->
+                    <h2 class="text-5xl sm:text-6xl font-black text-red-500 mb-4">GAME OVER</h2>
+                    <div class="text-2xl mb-6 bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+                        <p class="text-white">Score: <span id="final-score" class="font-bold text-green-400">0</span></p>
+                        <p class="text-white">Level High Score: <span id="level-high-score" class="font-bold text-yellow-400">0</span></p>
+                    </div>
+                    <p id="level-unlock-message" class="text-xl text-green-400 font-semibold mb-6 hidden"></p>
+                    <div class="flex gap-4">
+                        <button id="restart-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition duration-200">Restart Level</button>
+                        <button id="change-level-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition duration-200">Change Level</button>
+                    </div>
+                </div>
+
+                <!-- Paused Screen -->
+                <div id="paused-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                    <h2 class="text-6xl font-black text-yellow-400 mb-8">PAUSED</h2>
+                    <button id="resume-btn-overlay" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition duration-200">
+                        Resume
+                    </button>
+                    <p class="text-gray-400 text-lg mt-6">Press 'P' to resume</p>
+                </div>
+
+                <!-- Game Start Text Overlay (Structure only) -->
+                <div id="game-start-text-overlay" class="game-text-overlay hidden">
+                    <!-- Content injected by JS -->
+                </div>
+
+                <!-- Game Over Text Overlay (Structure only) -->
+                <div id="game-over-text-overlay" class="game-text-overlay hidden">
+                    <!-- Content injected by JS -->
+                </div>
+
+                <!-- Booster Text Overlay (Structure only) -->
+                <div id="booster-text-overlay" class="game-text-overlay hidden">
+                    <!-- Content injected by JS -->
+                </div>
+
+            </div>
+        </main>
+        
+        <!-- NEW: Leaderboard Modal (Renamed from stats-modal) -->
+        <div id="leaderboard-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col border border-gray-700">
+                
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                     <h3 class="text-2xl font-bold text-white">Global Leaderboard</h3>
+                     <button id="close-leaderboard-modal-btn" class="text-gray-400 hover:text-white transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                     </button>
+                </div>
+                
+                <!-- REMOVED: Tabs -->
+
+                <!-- Tab Content -->
+                <div class="overflow-y-auto">
+                    <!-- Leaderboard Content -->
+                    <div id="leaderboard-content">
+                        <p class="text-sm text-gray-400 mb-3">All players ranked by total points (sum of all level high scores).</p>
+                        <div id="leaderboard-list" class="space-y-2">
+                             <p class="text-gray-500">Loading leaderboard...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- NEW: My Profile Modal (Separate from stats) -->
+        <div id="profile-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col border border-gray-700">
+                
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                     <h3 class="text-2xl font-bold text-white">My Profile</h3>
+                     <button id="close-profile-modal-btn" class="text-gray-400 hover:text-white transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                     </button>
+                </div>
+                
+                <!-- REMOVED: Tabs -->
+
+                <!-- Profile Content -->
+                <div class="overflow-y-auto">
+                    <div id="my-profile-content">
+                        <!-- My profile details will be injected here by renderMyProfile() -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer Navigation -->
+        <footer id="main-footer" class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-20">
+            <nav class="container mx-auto max-w-7xl flex justify-around items-center">
+                <button id="footer-game-btn" class="flex-1 flex flex-col items-center justify-center p-3 text-cyan-400 transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="text-xs font-semibold">Game</span>
+                </button>
+                <button id="footer-stats-btn" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span class="text-xs font-semibold">Stats</span>
+                </button>
+                <button id="footer-profile-btn" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span class="text-xs font-semibold">Profile</span>
+                </button>
+            </nav>
+        </footer>
+    </div>
+
+    <!-- 4. Firebase and Game Logic -->
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            collection, 
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Global Config & State ---
+
+        // Firebase Config (using provided globals)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Firebase Services
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        let unsubscribeFromProfiles; // To stop onSnapshot listener
+
+        // NEW: Audio Context
+        let audioCtx;
+
+        // User Profile State
+        const userProfile = {
+            unlockedLevel: 'easy',
+            highScores: {
+                easy: 0,
+                difficult: 0,
+                hard: 0,
+                pro: 0,
+                ultraLegend: 0
+            },
+            displayName: '',
+            profilePicUrl: '',
+            socialLinks: {
+                twitter: '',
+                github: ''
+            }
+        };
+
+        // DOM Elements
+        const gameContainer = document.getElementById('game-container');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlays = {
+            loading: document.getElementById('loading-overlay'),
+            start: document.getElementById('start-overlay'),
+            gameOver: document.getElementById('game-over-overlay'),
+            paused: document.getElementById('paused-overlay'),
+            gameStartText: document.getElementById('game-start-text-overlay'),
+            gameOverText: document.getElementById('game-over-text-overlay'),
+            boosterText: document.getElementById('booster-text-overlay'),
+        };
+        const displays = {
+            userStatus: document.getElementById('user-status'),
+            currentLevel: document.getElementById('current-level-display'),
+            startLevel: document.getElementById('start-level-display'),
+            finalScore: document.getElementById('final-score'),
+            levelHighScore: document.getElementById('level-high-score'),
+            levelUnlockMsg: document.getElementById('level-unlock-message'),
+        };
+        const buttons = {
+            levelSelectContainer: document.getElementById('level-select-container'),
+            restart: document.getElementById('restart-btn'),
+            changeLevel: document.getElementById('change-level-btn'),
+            closeLeaderboardModal: document.getElementById('close-leaderboard-modal-btn'), // NEW ID
+            closeProfileModal: document.getElementById('close-profile-modal-btn'), // NEW
+            pauseToggle: document.getElementById('pause-toggle-btn'),
+            resumeOverlay: document.getElementById('resume-btn-overlay'),
+            mainHeader: document.getElementById('main-header'),
+            mainFooter: document.getElementById('main-footer'),
+            footerGameBtn: document.getElementById('footer-game-btn'),
+            footerStatsBtn: document.getElementById('footer-stats-btn'),
+            footerProfileBtn: document.getElementById('footer-profile-btn'),
+        };
+        
+        // NEW: Modal Elements
+        const leaderboardModal = document.getElementById('leaderboard-modal'); // NEW ID
+        const profileModal = document.getElementById('profile-modal'); // NEW
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const myProfileContent = document.getElementById('my-profile-content');
+        
+        // Game State
+        let gameState = 'loading'; // loading, start, playing, over, paused
+        let currentLevel = 'easy';
+        let score = 0;
+        let gameLoopId;
+        let isEditingProfile = false;
+        let textOverlayTimers = [];
+
+        // Game Objects
+        let bird, pipes;
+        let particles = [];
+        let booster;
+        let fluidBackground;
+        let rgbHue = 0;
+
+        // --- NEW: Sound System ---
+        
+        /**
+         * Initializes the AudioContext. Must be called after a user interaction.
+         */
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        /**
+         * A simple procedural sound generator.
+         */
+        const SoundManager = {
+            play(soundName) {
+                if (!audioCtx) return; // Audio not initialized
+
+                const now = audioCtx.currentTime;
+                let oscillator, gain;
+
+                try {
+                    oscillator = audioCtx.createOscillator();
+                    gain = audioCtx.createGain();
+                    oscillator.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    switch (soundName) {
+                        case 'flap':
+                            oscillator.type = 'sine';
+                            gain.gain.setValueAtTime(0.3, now);
+                            oscillator.frequency.setValueAtTime(300, now);
+                            oscillator.frequency.linearRampToValueAtTime(400, now + 0.05);
+                            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                            oscillator.start(now);
+                            oscillator.stop(now + 0.1);
+                            break;
+
+                        case 'score':
+                            oscillator.type = 'sine';
+                            gain.gain.setValueAtTime(0.2, now);
+                            oscillator.frequency.setValueAtTime(600, now);
+                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.05);
+                            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                            oscillator.start(now);
+                            oscillator.stop(now + 0.1);
+                            break;
+
+                        case 'crash':
+                            oscillator.type = 'sawtooth';
+                            gain.gain.setValueAtTime(0.5, now);
+                            oscillator.frequency.setValueAtTime(200, now);
+                            oscillator.frequency.linearRampToValueAtTime(50, now + 0.2);
+                            gain.gain.linearRampToValueAtTime(0, now + 0.2);
+                            oscillator.start(now);
+                            oscillator.stop(now + 0.2);
+                            break;
+                            
+                        case 'start': // "Chidiya Ud"
+                            oscillator.type = 'triangle';
+                            gain.gain.setValueAtTime(0.3, now);
+                            oscillator.frequency.setValueAtTime(400, now);
+                            oscillator.frequency.linearRampToValueAtTime(600, now + 0.1);
+                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.2);
+                            gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                            oscillator.start(now);
+                            oscillator.stop(now + 0.3);
+                            break;
+                            
+                        case 'booster': // "Aasmaan"
+                            oscillator.type = 'square';
+                            gain.gain.setValueAtTime(0.2, now);
+                            oscillator.frequency.setValueAtTime(600, now);
+                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.1);
+                            oscillator.frequency.linearRampToValueAtTime(1000, now + 0.2);
+                            oscillator.frequency.linearRampToValueAtTime(1200, now + 0.3);
+                            gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                            oscillator.start(now);
+                            oscillator.stop(now + 0.4);
+                            break;
+                    }
+                } catch (e) {
+                    console.error("Error playing sound:", e);
+                }
+            }
+        };
+
+
+        // --- Background Systems ---
+        const particleSystem = {
+            init() {
+                particles = [];
+                for(let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        radius: Math.random() * 1.5 + 0.5,
+                        speed: Math.random() * 0.5 + 0.1
+                    });
+                }
+            },
+            draw(config) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                for(const p of particles) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            },
+            update(config) {
+                let effectivePipeSpeed = config.pipeSpeed;
+                if (bird && bird.invincible) {
+                    effectivePipeSpeed *= config.boosterSpeedMultiplier;
+                }
+                for(const p of particles) {
+                    p.x -= (p.speed + effectivePipeSpeed * 0.1); 
+                    if (p.x < 0) {
+                        p.x = canvas.width;
+                        p.y = Math.random() * canvas.height;
+                    }
+                }
+            }
+        };
+
+        const plasmaBackground = {
+            grid: [],
+            cols: 20,
+            rows: 10,
+            time: 0,
+            init() {
+                this.grid = [];
+                this.cols = Math.floor(canvas.width / 50) + 1;
+                this.rows = Math.floor(canvas.height / 50) + 1;
+                this.time = 0;
+                for (let i = 0; i < this.cols; i++) {
+                    this.grid[i] = [];
+                    for (let j = 0; j < this.rows; j++) {
+                        this.grid[i][j] = 0;
+                    }
+                }
+            },
+            draw(config) {
+                if (config.bgEffect !== 'plasma') return;
+                this.time += 0.02;
+                for (let i = 0; i < this.cols; i++) {
+                    for (let j = 0; j < this.rows; j++) {
+                        this.grid[i][j] = Math.sin(this.time + i * 0.5) + Math.sin(this.time + j * 0.3);
+                    }
+                }
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+                for (let i = 0; i < this.cols - 1; i++) {
+                    for (let j = 0; j < this.rows - 1; j++) {
+                        const x = i * (canvas.width / (this.cols - 1));
+                        const y = j * (canvas.height / (this.rows - 1));
+                        const val = this.grid[i][j] * 20;
+                        const p1 = { x: x, y: y + val };
+                        const p2 = { x: x + (canvas.width / (this.cols - 1)), y: y + this.grid[i+1][j] * 20 };
+                        const p3 = { x: x + (canvas.width / (this.cols - 1)), y: y + (canvas.height / (this.rows -1)) + this.grid[i+1][j+1] * 20 };
+                        const p4 = { x: x, y: y + (canvas.height / (this.rows - 1)) + this.grid[i][j+1] * 20 };
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.lineTo(p3.x, p3.y);
+                        ctx.lineTo(p4.x, p4.y);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+        };
+
+        // --- Level Definitions ---
+        const levelOrder = ['easy', 'difficult', 'hard', 'pro', 'ultraLegend'];
+        const levelConfigs = {
+            easy: {
+                name: "Easy",
+                gravity: 0.25,
+                flap: -5,
+                pipeSpeed: 2,
+                pipeGap: 200,
+                pipeFrequency: 120,
+                pipeOscillation: 0,
+                scoreToUnlock: 5,
+                birdColor: '#facc15',
+                birdSvgPath: 'M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z',
+                pipeColor: '#4ade80',
+                bgGradient: ['#06b6d4', '#3b82f6'],
+                bgEffect: 'plasma',
+                boosterFrequency: 900,
+                boosterSpeedMultiplier: 5
+            },
+            difficult: {
+                name: "Difficult",
+                gravity: 0.3,
+                flap: -5.5,
+                pipeSpeed: 3,
+                pipeGap: 180,
+                pipeFrequency: 100,
+                pipeOscillation: 30,
+                scoreToUnlock: 10,
+                birdColor: '#f97316',
+                birdSvgPath: 'M0 10 Q 10 0 30 10 L 25 10 Q 15 20 5 10 Z',
+                pipeColor: '#22c55e',
+                bgGradient: ['#1d4ed8', '#7c3aed'],
+                bgEffect: 'plasma',
+                boosterFrequency: 1200,
+                boosterSpeedMultiplier: 10
+            },
+            hard: {
+                name: "Hard",
+                gravity: 0.35,
+                flap: -6,
+                pipeSpeed: 3.5,
+                pipeGap: 150,
+                pipeFrequency: 90,
+                pipeOscillation: 50,
+                scoreToUnlock: 15,
+                birdColor: '#ef4444',
+                birdSvgPath: 'M0 5 Q 15 -5 30 5 L 28 15 Q 15 10 2 15 Z',
+                pipeColor: '#10b981',
+                bgGradient: ['#5b21b6', '#c026d3'],
+                bgEffect: 'plasma',
+                boosterFrequency: 1500,
+                boosterSpeedMultiplier: 15
+            },
+            pro: {
+                name: "Pro",
+                gravity: 0.4,
+                flap: -6.5,
+                pipeSpeed: 4.5,
+                pipeGap: 120,
+                pipeFrequency: 75,
+                pipeOscillation: 80,
+                scoreToUnlock: 20,
+                birdColor: '#ec4899',
+                birdSvgPath: 'M0 15 Q 5 0 15 0 Q 25 0 30 15 L 20 15 Q 15 5 10 15 Z',
+                pipeColor: '#0ea5e9',
+                bgGradient: ['#1e1b4b', '#4c1d95'],
+                bgEffect: 'plasma',
+                boosterFrequency: 1800,
+                boosterSpeedMultiplier: 20
+            },
+            ultraLegend: {
+                name: "Ultra Legend",
+                gravity: 0.5,
+                flap: -7.5,
+                pipeSpeed: 6,
+                pipeGap: 100,
+                pipeFrequency: 60,
+                pipeOscillation: 100,
+                scoreToUnlock: Infinity,
+                birdColor: '#ffffff',
+                birdSvgPath: 'M0 10 L 15 0 L 30 10 L 15 30 Z',
+                pipeColor: 'rgb',
+                bgGradient: ['#000000', '#200000'],
+                bgEffect: 'plasma',
+                boosterFrequency: 2100,
+                boosterSpeedMultiplier: 25
+            }
+        };
+
+        // --- Bird Loader Setup ---
+        function setupLoader() {
+            const loaderContainer = document.getElementById('loader-container');
+            if (loaderContainer) {
+                const birdPath = levelConfigs.easy.birdSvgPath;
+                loaderContainer.innerHTML = `
+                    <svg class="w-16 h-16 loader-bird" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                        <path d="${birdPath}" fill="#facc15" stroke="#333" stroke-width="2" />
+                    </svg>
+                `;
+            }
+        }
+        setupLoader();
+
+        // --- Firebase Functions ---
+        async function initFirebase() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase config is empty. Make sure __firebase_config is set.");
+                }
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        displays.userStatus.textContent = `User ID: ${userId.substring(0, 10)}...`;
+                        isAuthReady = true;
+                        await loadUserProfile();
+                    } else {
+                        signInUser();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                displays.userStatus.textContent = "Firebase Error";
+                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error connecting to Firebase.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Did you set up the __firebase_config environment variable and authorize this domain in Firebase?</p>`;
+            }
+        }
+
+        async function signInUser() {
+             try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                displays.userStatus.textContent = "Auth Error";
+            }
+        }
+
+        async function loadUserProfile() {
+            if (!userId) return;
+            const profileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, userId);
+            try {
+                const docSnap = await getDoc(profileRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    userProfile.unlockedLevel = data.unlockedLevel || 'easy';
+                    userProfile.highScores = { ...userProfile.highScores, ...data.highScores };
+                    userProfile.displayName = data.displayName || `User-${userId.substring(0, 6)}`;
+                    userProfile.profilePicUrl = data.profilePicUrl || '';
+                    userProfile.socialLinks = { ...userProfile.socialLinks, ...data.socialLinks };
+                } else {
+                    userProfile.displayName = `User-${userId.substring(0, 6)}`;
+                    await saveUserProfile(true);
+                }
+                updateUIState('start');
+                setupLevelSelect();
+            } catch (error) {
+                console.error("Error loading user profile:", error);
+                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error loading profile.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Check your Firestore security rules.</p>`;
+            }
+        }
+
+        async function saveUserProfile(isNew = false) {
+            if (!userId) return;
+            const totalPoints = Object.values(userProfile.highScores).reduce((a, b) => a + b, 0);
+            const profileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, userId);
+            const dataToSave = {
+                unlockedLevel: userProfile.unlockedLevel,
+                highScores: userProfile.highScores,
+                totalPoints: totalPoints,
+                lastUpdated: serverTimestamp(),
+                displayName: userProfile.displayName,
+                profilePicUrl: userProfile.profilePicUrl,
+                socialLinks: userProfile.socialLinks,
+            };
+            try {
+                await setDoc(profileRef, dataToSave, { merge: !isNew });
+            } catch (error) {
+                console.error("Error saving user profile:", error);
+            }
+        }
+
+        function listenForAllProfiles() {
+            if (!isAuthReady || !db) return;
+            const profilesRef = collection(db, `artifacts/${appId}/public/data/userProfiles`);
+            if (unsubscribeFromProfiles) {
+                unsubscribeFromProfiles();
+            }
+            unsubscribeFromProfiles = onSnapshot(profilesRef, (snapshot) => {
+                let profiles = [];
+                snapshot.forEach((doc) => {
+                    profiles.push({ id: doc.id, ...doc.data() });
+                });
+                profiles.sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+                renderLeaderboardList(profiles);
+            }, (error) => {
+                console.error("Error listening to profiles:", error);
+                leaderboardList.innerHTML = `<p class="text-red-500">Error loading leaderboard. Check Firestore rules.</p>`;
+            });
+        }
+
+        function renderLeaderboardList(profiles) {
+            if (profiles.length === 0) {
+                leaderboardList.innerHTML = `<p class="text-gray-500">No other players found yet. Be the first!</p>`;
+                return;
+            }
+            leaderboardList.innerHTML = profiles.map((p, index) => {
+                const isCurrentUser = p.id === userId;
+                const levelName = levelConfigs[p.unlockedLevel]?.name || 'Easy';
+                const displayName = p.displayName || `User-${p.id.substring(0, 6)}`;
+                const picUrl = p.profilePicUrl || `https://placehold.co/40x40/374151/9CA3AF?text=${displayName.charAt(0)}`;
+                
+                return `
+                    <div class="bg-gray-700 p-3 rounded-lg flex items-center justify-between transition duration-200 hover:bg-gray-600 ${isCurrentUser ? 'border-2 border-cyan-400 shadow-lg' : 'border border-gray-600'}">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-lg font-bold w-8 text-center text-gray-400">${index + 1}</span>
+                            <img src="${picUrl}" alt="Profile" class="w-10 h-10 rounded-full bg-gray-600 object-cover" onerror="this.src='https://placehold.co/40x40/374151/9CA3AF?text=${displayName.charAt(0)}'">
+                            <div>
+                                <p class="font-bold text-white">${displayName}${isCurrentUser ? ' (You)' : ''}</p>
+                                <p class="text-sm text-gray-300">Highest Level: <span class="font-semibold text-yellow-400">${levelName}</span></p>
+                            </div>
+                        </div>
+                        <div class="text-right flex-shrink-0 ml-4">
+                            <p class="text-xl font-bold text-green-400">${p.totalPoints || 0}</p>
+                            <p class="text-xs text-gray-400">Total Points</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Renders the "My Profile" tab (View or Edit mode).
+         */
+        function renderMyProfile() {
+            if (!userId) {
+                myProfileContent.innerHTML = `<p class="text-gray-500">Loading profile...</p>`;
+                return;
+            }
+
+            if (isEditingProfile) {
+                // --- EDIT MODE ---
+                myProfileContent.innerHTML = `
+                    <div class="space-y-4 p-1">
+                        <div>
+                            <label for="displayNameInput" class="block text-sm font-medium text-gray-300 mb-1">Display Name</label>
+                            <input type="text" id="displayNameInput" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" value="${userProfile.displayName || ''}">
+                        </div>
+                        <div>
+                            <label for="profilePicUrlInput" class="block text-sm font-medium text-gray-300 mb-1">Profile Picture URL</label>
+                            <input type="text" id="profilePicUrlInput" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" value="${userProfile.profilePicUrl || ''}" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label for="twitterInput" class="block text-sm font-medium text-gray-300 mb-1">Twitter Username</label>
+                            <input type="text" id="twitterInput" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" value="${userProfile.socialLinks.twitter || ''}" placeholder="username">
+                        </div>
+                        <div>
+                            <label for="githubInput" class="block text-sm font-medium text-gray-300 mb-1">GitHub Username</label>
+                            <input type="text" id="githubInput" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" value="${userProfile.socialLinks.github || ''}" placeholder="username">
+                        </div>
+                        <div class="flex gap-4 pt-2">
+                            <button id="save-profile-btn" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-2 px-4 rounded-lg">Save Changes</button>
+                            <button id="cancel-edit-btn" class="w-full bg-gray-500 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add event listeners for save/cancel
+                document.getElementById('save-profile-btn').onclick = async () => {
+                    userProfile.displayName = document.getElementById('displayNameInput').value;
+                    userProfile.profilePicUrl = document.getElementById('profilePicUrlInput').value;
+                    userProfile.socialLinks.twitter = document.getElementById('twitterInput').value;
+                    userProfile.socialLinks.github = document.getElementById('githubInput').value;
+                    
+                    await saveUserProfile();
+                    isEditingProfile = false;
+                    renderMyProfile();
+                };
+                document.getElementById('cancel-edit-btn').onclick = () => {
+                    isEditingProfile = false;
+                    renderMyProfile();
+                };
+
+            } else {
+                // --- VIEW MODE (REDESIGNED) ---
+                const myTotalPoints = Object.values(userProfile.highScores).reduce((a, b) => a + b, 0);
+                const displayName = userProfile.displayName || `User-${userId.substring(0, 6)}`;
+                const picUrl = userProfile.profilePicUrl || `https://placehold.co/80x80/374151/9CA3AF?text=${displayName.charAt(0)}`;
+                
+                let highScoresHtml = levelOrder.map(levelId => {
+                    const config = levelConfigs[levelId];
+                    const score = userProfile.highScores[levelId] || 0;
+                    return `
+                        <div class="bg-gray-700 p-4 rounded-lg text-center shadow-md">
+                            <p class="text-sm font-semibold text-gray-300">${config.name}</p>
+                            <p class="text-2xl font-bold text-green-400">${score}</p>
+                        </div>
+                    `;
+                }).join('');
+
+                // Social Links
+                const twitterLink = userProfile.socialLinks.twitter ? `<a href="https://twitter.com/${userProfile.socialLinks.twitter}" target="_blank" class="text-gray-400 hover:text-cyan-400 transition-colors" title="Twitter">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.213-.005-.426-.015-.637A9.954 9.954 0 0023.953 4.57z"></path></svg>
+                </a>` : '';
+                const githubLink = userProfile.socialLinks.github ? `<a href="https://github.com/${userProfile.socialLinks.github}" target="_blank" class="text-gray-400 hover:text-white transition-colors" title="GitHub">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.165 6.839 9.488.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.602-3.369-1.343-3.369-1.343-.454-1.151-1.11-1.458-1.11-1.458-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.089 2.91.833.092-.647.35-1.086.636-1.336-2.22-.251-4.555-1.111-4.555-4.945 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.025A9.548 9.548 0 0112 6.836c.85.003 1.7.114 2.492.338 1.91-1.294 2.748-1.025 2.748-1.025.548 1.376.204 2.393.1 2.646.64.698 1.027 1.59 1.027 2.682 0 3.844-2.338 4.69-4.566 4.936.36.307.678.915.678 1.846 0 1.334-.012 2.41-.012 2.736 0 .267.18.577.688.48C19.138 20.163 22 16.417 22 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd"></p></svg>
+                </a>` : '';
+
+                myProfileContent.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex flex-col items-center p-4 bg-gray-900 rounded-lg">
+                            <img src="${picUrl}" alt="Profile" class="w-24 h-24 rounded-full bg-gray-600 mb-4 object-cover shadow-lg border-4 border-gray-700" onerror="this.src='https://placehold.co/80x80/374151/9CA3AF?text=${displayName.charAt(0)}'">
+                            <h4 class="text-3xl font-bold text-white">${displayName}</h4>
+                            <p class="text-lg text-gray-400">Highest Level: <span class="font-bold text-yellow-400">${levelConfigs[userProfile.unlockedLevel].name}</span></p>
+                            <div class="flex space-x-6 mt-3">
+                                ${twitterLink}
+                                ${githubLink}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-900 p-4 rounded-lg">
+                            <div class="bg-gray-700 p-4 rounded-lg text-center mb-4">
+                                <p class="text-sm font-semibold text-gray-300">TOTAL POINTS</p>
+                                <p class="text-4xl font-bold text-green-400">${myTotalPoints}</p>
+                            </div>
+                            
+                            <h6 class="text-md font-semibold text-gray-300 mb-2 px-1">High Scores</h6>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                ${highScoresHtml}
+                            </div>
+                        </div>
+                        <button id="edit-profile-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">Edit Profile</button>
+                    </div>
+                `;
+
+                // Add event listener for edit button
+                document.getElementById('edit-profile-btn').onclick = () => {
+                    isEditingProfile = true;
+                    renderMyProfile(); // Re-render in edit mode
+                };
+            }
+        }
+
+
+        // --- UI Functions ---
+        function updateUIState(newState) {
+            gameState = newState;
+            Object.values(overlays).forEach(overlay => overlay.classList.add('hidden'));
+            
+            if (newState === 'loading') {
+                overlays.loading.classList.remove('hidden');
+                buttons.mainHeader.classList.add('hidden');
+                buttons.mainFooter.classList.add('hidden');
+            } else if (newState === 'start') {
+                displays.startLevel.textContent = levelConfigs[userProfile.unlockedLevel].name;
+                overlays.start.classList.remove('hidden');
+                buttons.pauseToggle.classList.add('hidden');
+                buttons.mainHeader.classList.remove('hidden');
+                buttons.mainFooter.classList.remove('hidden');
+                updateFooterTabs('game');
+            } else if (newState === 'playing') {
+                buttons.pauseToggle.classList.remove('hidden');
+                buttons.mainHeader.classList.add('hidden');
+                buttons.mainFooter.classList.add('hidden');
+            } else if (newState === 'over') {
+                displays.finalScore.textContent = score;
+                displays.levelHighScore.textContent = userProfile.highScores[currentLevel];
+                overlays.gameOver.classList.remove('hidden');
+                buttons.pauseToggle.classList.add('hidden');
+                buttons.mainHeader.classList.remove('hidden');
+                buttons.mainFooter.classList.remove('hidden');
+                updateFooterTabs('game');
+            } else if (newState === 'paused') {
+                overlays.paused.classList.remove('hidden');
+                buttons.pauseToggle.textContent = 'Resume';
+                buttons.pauseToggle.classList.remove('hidden');
+                buttons.mainHeader.classList.remove('hidden');
+                buttons.mainFooter.classList.add('hidden');
+            }
+        }
+
+        function setupLevelSelect() {
+            buttons.levelSelectContainer.innerHTML = '';
+            let unlockedIndex = levelOrder.indexOf(userProfile.unlockedLevel);
+            levelOrder.forEach((levelId, index) => {
+                const config = levelConfigs[levelId];
+                const button = document.createElement('button');
+                button.dataset.level = levelId;
+                button.className = "text-white font-bold py-3 px-5 rounded-lg shadow-lg transition duration-200 text-sm";
+                if (index <= unlockedIndex) {
+                    button.textContent = config.name;
+                    button.classList.add('bg-cyan-600', 'hover:bg-cyan-500');
+                    button.onclick = () => {
+                        if (!audioCtx) initAudio(); // NEW: Initialize audio on user interaction
+                        currentLevel = levelId;
+                        displays.currentLevel.textContent = config.name;
+                        startGame();
+                    };
+                } else {
+                    button.textContent = 'LOCKED';
+                    button.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+                    button.disabled = true;
+                }
+                buttons.levelSelectContainer.appendChild(button);
+            });
+        }
+
+        // --- Game Logic ---
+        function resizeCanvas() {
+            const { width, height } = gameContainer.getBoundingClientRect();
+            canvas.width = width;
+            canvas.height = height;
+            if (plasmaBackground) {
+                plasmaBackground.init();
+            }
+        }
+
+        /**
+         * Shows and hides an animated text overlay.
+         */
+        function animateTextOverlay(overlayElem, text, styleClass = '') {
+            // Clear any existing animation timers for this element
+            const existingTimer = textOverlayTimers.find(t => t.elem === overlayElem);
+            if (existingTimer) {
+                clearTimeout(existingTimer.timeoutId);
+            }
+
+            // Apply text and style
+            overlayElem.innerHTML = text;
+            overlayElem.className = `game-text-overlay ${styleClass}`; // Reset classes
+            
+            // Trigger animation
+            overlayElem.classList.add('animate-fly-in');
+
+            // Set a timer to remove the animation class so it can be re-triggered
+            const timeoutId = setTimeout(() => {
+                overlayElem.classList.remove('animate-fly-in');
+                overlayElem.classList.add('hidden'); // Ensure it's hidden after
+            }, 2000); // 2s animation duration
+
+            // Store the timer
+            textOverlayTimers = textOverlayTimers.filter(t => t.elem !== overlayElem);
+            textOverlayTimers.push({ elem: overlayElem, timeoutId: timeoutId });
+        }
+
+        function startGame() {
+            score = 0;
+            particleSystem.init();
+            plasmaBackground.init();
+            const config = levelConfigs[currentLevel];
+            
+            bird = {
+                x: canvas.width / 4,
+                y: canvas.height / 2,
+                vy: 0,
+                rotation: 0,
+                width: 30,
+                height: 30,
+                config: config,
+                invincible: false,
+                path: new Path2D(config.birdSvgPath),
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                    ctx.rotate(this.rotation);
+                    ctx.scale(this.width / 30, this.height / 30);
+                    ctx.translate(-15, -15); 
+                    ctx.fillStyle = this.config.birdColor;
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.fill(this.path);
+                    ctx.stroke(this.path);
+                    ctx.restore();
+                    if (this.invincible) {
+                        ctx.save();
+                        const glowSize = this.width * 1.8;
+                        const glowAlpha = 0.4 + Math.sin(Date.now() * 0.02) * 0.3;
+                        const glowGradient = ctx.createRadialGradient(
+                            this.x + this.width / 2, this.y + this.height / 2, 0,
+                            this.x + this.width / 2, this.y + this.height / 2, glowSize / 2
+                        );
+                        glowGradient.addColorStop(0, `rgba(255, 255, 0, ${glowAlpha})`);
+                        glowGradient.addColorStop(1, `rgba(255, 255, 0, 0)`);
+                        ctx.fillStyle = glowGradient;
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width / 2, this.y + this.height / 2, glowSize / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                },
+                update() {
+                    this.vy += this.config.gravity;
+                    this.y += this.vy;
+                    const maxRotation = Math.PI / 4;
+                    const minRotation = -Math.PI / 6;
+                    this.rotation = Math.max(minRotation, Math.min(maxRotation, this.vy * 0.05));
+                    if (this.vy < 0) {
+                        this.rotation = minRotation;
+                    }
+                    if (this.y < 0) {
+                        this.y = 0;
+                        this.vy = 0;
+                    }
+                    if (this.y + this.height > canvas.height) {
+                        if (!this.invincible) {
+                            gameOver();
+                        } else {
+                            this.y = canvas.height - this.height;
+                            this.vy = this.config.flap * 0.5;
+                        }
+                    }
+                },
+                flap() {
+                    this.vy = this.config.flap;
+                    SoundManager.play('flap'); // NEW: Play flap sound
+                }
+            };
+
+            pipes = {
+                list: [],
+                width: 60,
+                frameCount: 0,
+                config: config,
+                draw() {
+                    const capHeight = 20;
+                    const capWidth = this.width + 4;
+                    const capOffset = (capWidth - this.width) / 2;
+                    let pipeFill = this.config.pipeColor;
+                    if (this.config.pipeColor === 'rgb') {
+                        rgbHue = (rgbHue + 1) % 360;
+                        pipeFill = `hsl(${rgbHue}, 100%, 50%)`;
+                    }
+                    for (const p of this.list) {
+                        const pipeGradient = ctx.createLinearGradient(p.x, 0, p.x + this.width, 0);
+                        pipeGradient.addColorStop(0, pipeFill);
+                        pipeGradient.addColorStop(0.5, 'white');
+                        pipeGradient.addColorStop(1, pipeFill);
+                        ctx.fillStyle = pipeGradient;
+                        const capGradient = ctx.createLinearGradient(0, 0, 0, capHeight);
+                        capGradient.addColorStop(0, '#eee');
+                        capGradient.addColorStop(1, '#999');
+                        ctx.fillRect(p.x, 0, this.width, p.topHeight - capHeight);
+                        ctx.fillStyle = capGradient;
+                        ctx.fillRect(p.x - capOffset, p.topHeight - capHeight, capWidth, capHeight);
+                        const bottomPipeY = p.topHeight + this.config.pipeGap;
+                        ctx.fillStyle = pipeGradient;
+                        ctx.fillRect(p.x, bottomPipeY + capHeight, this.width, canvas.height - bottomPipeY - capHeight);
+                        ctx.fillStyle = capGradient;
+                        ctx.fillRect(p.x - capOffset, bottomPipeY, capWidth, capHeight);
+                    }
+                },
+                update() {
+                    this.frameCount++;
+                    let effectivePipeSpeed = this.config.pipeSpeed;
+                    if (bird && bird.invincible) {
+                        effectivePipeSpeed *= this.config.boosterSpeedMultiplier;
+                    }
+                    const effectivePipeFrequency = bird && bird.invincible 
+                        ? this.config.pipeFrequency / this.config.boosterSpeedMultiplier
+                        : this.config.pipeFrequency;
+                    if (this.frameCount % Math.round(effectivePipeFrequency) === 0) {
+                        const topHeight = Math.random() * (canvas.height - this.config.pipeGap - 100) + 50;
+                        this.list.push({ 
+                            x: canvas.width, 
+                            topHeight: topHeight, 
+                            originalTopHeight: topHeight,
+                            oscillationOffset: Math.random() * Math.PI * 2,
+                            scored: false 
+                        });
+                    }
+                    for (let i = this.list.length - 1; i >= 0; i--) {
+                        const p = this.list[i];
+                        p.x -= effectivePipeSpeed;
+                        if (this.config.pipeOscillation > 0) {
+                            p.topHeight = p.originalTopHeight + Math.sin(this.frameCount * 0.05 + p.oscillationOffset) * this.config.pipeOscillation;
+                        }
+                        if (p.x + this.width < 0) {
+                            this.list.splice(i, 1);
+                        }
+                        if (!p.scored && p.x + this.width < bird.x) {
+                            score++;
+                            p.scored = true;
+                            SoundManager.play('score'); // NEW: Play score sound
+                        }
+                        if (!bird.invincible) {
+                            if (
+                                bird.x < p.x + this.width &&
+                                bird.x + bird.width > p.x &&
+                                (bird.y < p.topHeight || bird.y + bird.height > p.topHeight + this.config.pipeGap)
+                            ) {
+                                gameOver();
+                            }
+                        }
+                    }
+                }
+            };
+
+            booster = {
+                spawnTimer: config.boosterFrequency,
+                active: false,
+                x: 0,
+                y: 0,
+                width: 20,
+                height: 20,
+                rotation: 0,
+                invincibilityTimer: 0,
+                config: config,
+                reset() {
+                    this.spawnTimer = this.config.boosterFrequency;
+                    this.active = false;
+                    this.invincibilityTimer = 0;
+                    if (bird) bird.invincible = false;
+                },
+                update() {
+                    let effectivePipeSpeed = this.config.pipeSpeed;
+                    if (bird && bird.invincible) {
+                        effectivePipeSpeed *= this.config.boosterSpeedMultiplier;
+                    }
+                    if (this.invincibilityTimer > 0) {
+                        this.invincibilityTimer--;
+                        if (this.invincibilityTimer === 0) {
+                            bird.invincible = false;
+                        }
+                    }
+                    if (this.active) {
+                        this.x -= effectivePipeSpeed;
+                        if (
+                            !bird.invincible &&
+                            bird.x < this.x + this.width &&
+                            bird.x + bird.width > this.x &&
+                            bird.y < this.y + this.height &&
+                            bird.y + bird.height > this.y
+                        ) {
+                            this.active = false;
+                            this.invincibilityTimer = 15 * 60;
+                            bird.invincible = true;
+                            this.spawnTimer = this.config.boosterFrequency;
+
+                            // Trigger booster text and sound
+                            const text = `<h2 class="text-3xl font-bold text-yellow-300">YE MAIN AASMAAN KI UCHAIYO ME</h2>`;
+                            animateTextOverlay(overlays.boosterText, text, '!bg-yellow-500/20 !border-yellow-400/50');
+                            SoundManager.play('booster'); // NEW: Play booster sound
+                        }
+                        if (this.x + this.width < 0) {
+                            this.active = false;
+                            this.spawnTimer = this.config.boosterFrequency;
+                        }
+                    } else if (this.invincibilityTimer === 0) {
+                        this.spawnTimer--;
+                        if (this.spawnTimer <= 0) {
+                            this.active = true;
+                            this.x = canvas.width;
+                            this.y = Math.random() * (canvas.height - 100) + 50;
+                        }
+                    }
+                },
+                draw() {
+                    if (this.active) {
+                        ctx.save();
+                        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                        ctx.rotate(this.rotation);
+                        ctx.fillStyle = 'yellow';
+                        ctx.strokeStyle = 'orange';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        for (let i = 0; i < 5; i++) {
+                            ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * (this.width / 2), -Math.sin((18 + i * 72) * Math.PI / 180) * (this.height / 2));
+                            ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * (this.width / 4), -Math.sin((54 + i * 72) * Math.PI / 180) * (this.height / 4));
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    if (this.invincibilityTimer > 0) {
+                        ctx.fillStyle = 'white';
+                        ctx.font = '30px "Inter", sans-serif';
+                        ctx.textAlign = 'left';
+                        const secondsLeft = (this.invincibilityTimer / 60).toFixed(1);
+                        ctx.fillText(`BOOST: ${secondsLeft}s`, 10, canvas.height - 20);
+                        ctx.textAlign = 'right';
+                        ctx.fillText(`x${this.config.boosterSpeedMultiplier} SPEED!`, canvas.width - 10, canvas.height - 20);
+                    }
+                }
+            };
+            
+            booster.reset();
+            updateUIState('playing');
+
+            // Show "CHIDIYA UD" animation and play sound
+            const startText = `<h2 class="text-6xl font-black text-white">CHIDIYA UD</h2>`;
+            animateTextOverlay(overlays.gameStartText, startText);
+            SoundManager.play('start'); // NEW: Play start sound
+
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            const config = levelConfigs[currentLevel];
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, config.bgGradient[0]);
+            gradient.addColorStop(1, config.bgGradient[1]);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            plasmaBackground.draw(config);
+            particleSystem.update(config);
+            particleSystem.draw(config);
+            pipes.update();
+            pipes.draw();
+            booster.update();
+            booster.draw();
+            bird.update();
+            bird.draw();
+            ctx.fillStyle = 'white';
+            ctx.font = '60px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(score, canvas.width / 2, 80);
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        async function gameOver() {
+            if (gameState === 'over' || gameState === 'paused') return;
+            
+            SoundManager.play('crash'); // NEW: Play crash sound
+            
+            cancelAnimationFrame(gameLoopId);
+            updateUIState('over');
+
+            // Show device-specific lag message
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const lagText = isMobile 
+                ? "KYA HUA PHONE LAG KAR RAHA H 🥶" 
+                : "KEH DE DEVICE LOW-END H 🥶";
+            const lagTextHtml = `<h2 class="text-4xl font-bold text-yellow-400 p-4">${lagText}</h2>`;
+            animateTextOverlay(overlays.gameOverText, lagTextHtml, '!bg-red-500/20 !border-red-400/50');
+
+            if (score > userProfile.highScores[currentLevel]) {
+                userProfile.highScores[currentLevel] = score;
+            }
+            const config = levelConfigs[currentLevel];
+            const nextLevelIndex = levelOrder.indexOf(currentLevel) + 1;
+            const currentUnlockedIndex = levelOrder.indexOf(userProfile.unlockedLevel);
+            if (score >= config.scoreToUnlock && nextLevelIndex > currentUnlockedIndex && nextLevelIndex < levelOrder.length) {
+                const newLevelId = levelOrder[nextLevelIndex];
+                userProfile.unlockedLevel = newLevelId;
+                displays.levelUnlockMsg.textContent = `Congratulations! You've unlocked the "${levelConfigs[newLevelId].name}" level!`;
+                displays.levelUnlockMsg.classList.remove('hidden');
+            } else {
+                displays.levelUnlockMsg.classList.add('hidden');
+            }
+            await saveUserProfile();
+        }
+
+        function handleFlap(e) {
+            if (!audioCtx) initAudio(); // NEW: Initialize audio on first user interaction
+            
+            if (gameState === 'playing') {
+                bird.flap();
+            } else if (gameState === 'start' && e.type === 'keydown' && e.code === 'Space') {
+                const firstButton = buttons.levelSelectContainer.querySelector('button:not(:disabled)');
+                if (firstButton) {
+                    firstButton.click();
+                }
+            }
+        }
+
+        function togglePause() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                cancelAnimationFrame(gameLoopId);
+                updateUIState('paused');
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                updateUIState('playing');
+                gameLoop();
+            }
+        }
+
+        function updateFooterTabs(activeTab) {
+            [buttons.footerGameBtn, buttons.footerStatsBtn, buttons.footerProfileBtn].forEach(btn => {
+                btn.classList.remove('text-cyan-400');
+                btn.classList.add('text-gray-400');
+            });
+            if (activeTab === 'game') {
+                buttons.footerGameBtn.classList.add('text-cyan-400');
+                buttons.footerGameBtn.classList.remove('text-gray-400');
+            } else if (activeTab === 'stats') {
+                buttons.footerStatsBtn.classList.add('text-cyan-400');
+                buttons.footerStatsBtn.classList.remove('text-gray-400');
+            } else if (activeTab === 'profile') {
+                buttons.footerProfileBtn.classList.add('text-cyan-400');
+                buttons.footerProfileBtn.classList.remove('text-gray-400');
+            }
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', resizeCanvas);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleFlap(e);
+            }
+            if (e.code === 'KeyP') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+        document.addEventListener('mousedown', (e) => handleFlap(e));
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleFlap(e);
+        });
+
+        buttons.restart.addEventListener('click', () => {
+            startGame();
+        });
+
+        buttons.changeLevel.addEventListener('click', () => {
+            setupLevelSelect();
+            updateUIState('start');
+        });
+        
+        buttons.pauseToggle.addEventListener('click', togglePause);
+        buttons.resumeOverlay.addEventListener('click', togglePause);
+        
+        // --- NEW: Modal Control Functions ---
+
+        function openLeaderboardModal() {
+            listenForAllProfiles();
+            leaderboardModal.classList.remove('hidden');
+        }
+
+        function closeLeaderboardModal() {
+            leaderboardModal.classList.add('hidden');
+            if (unsubscribeFromProfiles) {
+                unsubscribeFromProfiles();
+                unsubscribeFromProfiles = null;
+            }
+            updateFooterTabs('game');
+        }
+
+        function openProfileModal() {
+            renderMyProfile(); // Render profile view
+            profileModal.classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            profileModal.classList.add('hidden');
+            isEditingProfile = false; // Always reset edit mode on close
+            updateFooterTabs('game');
+        }
+
+        // --- NEW: Updated Event Listeners ---
+
+        buttons.closeLeaderboardModal.addEventListener('click', closeLeaderboardModal);
+        buttons.closeProfileModal.addEventListener('click', closeProfileModal);
+
+        buttons.footerGameBtn.addEventListener('click', () => {
+            if (gameState === 'over' || gameState === 'start') {
+                 updateUIState('start');
+            }
+            closeLeaderboardModal(); // Close either modal if open
+            closeProfileModal();
+            updateFooterTabs('game');
+        });
+
+        buttons.footerStatsBtn.addEventListener('click', () => {
+            closeProfileModal(); // Close profile if open
+            openLeaderboardModal();
+            updateFooterTabs('stats');
+        });
+
+        buttons.footerProfileBtn.addEventListener('click', () => {
+            closeLeaderboardModal(); // Close stats if open
+            isEditingProfile = false; // Always open to view mode
+            openProfileModal();
+            updateFooterTabs('profile');
+        });
+
+        // --- Initialization ---
+        resizeCanvas();
+        initFirebase();
+
+    </script>
+</body>
+</html>
