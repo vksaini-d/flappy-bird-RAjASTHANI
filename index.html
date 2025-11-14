@@ -853,12 +853,14 @@
             }
             
             const provider = new GoogleAuthProvider();
+            const anonymousUser = auth.currentUser; // Save the anonymous user
+            
             try {
                 // Show loading screen while popup is active
                 overlays.auth.classList.add('hidden');
                 overlays.loading.classList.remove('hidden');
 
-                const result = await linkWithPopup(auth.currentUser, provider);
+                const result = await linkWithPopup(anonymousUser, provider);
                 const user = result.user;
                 
                 // User is now permanent. 
@@ -869,33 +871,31 @@
                 console.log("Account linked!", user.displayName);
 
             } catch (error) {
-                console.error("Error linking with Google:", error);
+                console.error("Error linking with Google:", error.code, error.message);
 
                 // ==========================================================
                 // NEW: Handle 'credential-already-in-use' (Account Merge)
                 // ==========================================================
                 if (error.code === 'auth/credential-already-in-use') {
                     // This account (e.g., google@example.com) already exists.
-                    // Let's sign them in with that account and merge their old progress.
+                    // The credential from the error is tainted. We must trigger a fresh sign-in.
                     overlays.loading.classList.remove('hidden'); // Make sure loading is on
                     overlays.auth.classList.add('hidden');
 
-                    const googleCredential = error.credential; // Get the Google credential from the error
-                    const anonymousUser = auth.currentUser; // Get the current anonymous user
-
                     try {
-                        // Sign in with the Google credential. This signs OUT the anonymous user.
-                        const googleSignInResult = await signInWithCredential(auth, googleCredential);
+                        // 1. Sign in with the Google provider *freshly*. This signs OUT the anonymous user.
+                        const { signInWithPopup } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                        const googleSignInResult = await signInWithPopup(auth, provider);
                         const googleUser = googleSignInResult.user; // This is the permanent user
 
-                        // 1. Get the anonymous user's data
+                        // 2. Get the anonymous user's data (we saved the user object)
                         const anonProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, anonymousUser.uid);
                         const anonDocSnap = await getDoc(anonProfileRef);
                         
                         if (anonDocSnap.exists()) {
                             const anonData = anonDocSnap.data();
                             
-                            // 2. Get the permanent user's data
+                            // 3. Get the permanent user's data
                             const googleProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, googleUser.uid);
                             const googleDocSnap = await getDoc(googleProfileRef);
 
@@ -913,7 +913,7 @@
                                 };
                             }
 
-                            // 3. Merge the data (highest scores win)
+                            // 4. Merge the data (highest scores win)
                             // NEW: Defensive checks for null or undefined highScores
                             const anonHighScores = anonData.highScores || {};
                             const googleHighScores = googleData.highScores || { easy: 0, difficult: 0, hard: 0, pro: 0, ultraLegend: 0 };
@@ -930,7 +930,7 @@
                             const googleLevelIndex = levelOrder.indexOf(googleData.unlockedLevel || 'easy');
                             const mergedUnlockedLevel = levelOrder[Math.max(anonLevelIndex, googleLevelIndex)];
 
-                            // 4. Create the final merged profile
+                            // 5. Create the final merged profile
                             const mergedProfile = {
                                 ...googleData, // Use Google user's display name, pic, etc. as base
                                 highScores: mergedHighScores,
@@ -940,10 +940,10 @@
                                 lastUpdated: serverTimestamp()
                             };
 
-                            // 5. Save the merged profile to the Google user's doc
+                            // 6. Save the merged profile to the Google user's doc
                             await setDoc(googleProfileRef, mergedProfile);
 
-                            // 6. Delete the old anonymous profile doc
+                            // 7. Delete the old anonymous profile doc
                             // We comment this out, as it can fail with strict rules.
                             // The orphaned doc is harmless.
                             // await deleteDoc(anonProfileRef); 
@@ -1947,4 +1947,5 @@
     </script>
 </body>
 </html>
+
 
