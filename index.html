@@ -356,7 +356,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
+       import { 
             getAuth, 
             signInAnonymously, 
             signInWithCustomToken, 
@@ -365,7 +365,8 @@
             linkWithPopup,
             PhoneAuthProvider, // NEW
             RecaptchaVerifier, // NEW
-            linkWithCredential // NEW
+            linkWithCredential, // NEW
+            signInWithCredential // ADDED FOR MERGE
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -801,14 +802,7 @@ const initialAuthToken = null;
         }
 
         // This function is called by the "Maybe Later (Play as Guest)" button
-        async function continueAsGuest() {
-            overlays.auth.classList.add('hidden');
-            overlays.loading.classList.remove('hidden'); // Show loading just in case
-            await loadUserProfile(); // This will load/create the anonymous profile and go to 'start'
-        }
-
-
-        // Function to link anonymous account with Google
+     // Function to link anonymous account with Google
         async function linkWithGoogle() {
             if (!auth.currentUser || !auth.currentUser.isAnonymous) {
                 console.log("User is not anonymous, no need to link.");
@@ -832,13 +826,102 @@ const initialAuthToken = null;
 
             } catch (error) {
                 console.error("Error linking with Google:", error);
-                // If they cancel or error, show auth screen again
-                overlays.loading.classList.add('hidden');
-                overlays.auth.classList.remove('hidden');
+
+                // ==========================================================
+                // NEW: Handle 'credential-already-in-use' (Account Merge)
+                // ==========================================================
                 if (error.code === 'auth/credential-already-in-use') {
-                    // This is a complex state. For now, just alert the user.
-                    // A real solution would involve signing in with the credential and merging data.
-                    alert("This Google account is already linked to another user.");
+                    // This account (e.g., google@example.com) already exists.
+                    // Let's sign them in with that account and merge their old progress.
+                    overlays.loading.classList.remove('hidden'); // Make sure loading is on
+                    overlays.auth.classList.add('hidden');
+
+                    const googleCredential = error.credential; // Get the Google credential from the error
+                    const anonymousUser = auth.currentUser; // Get the current anonymous user
+
+                    try {
+                        // Sign in with the Google credential. This signs OUT the anonymous user.
+                        const googleSignInResult = await signInWithCredential(auth, googleCredential);
+                        const googleUser = googleSignInResult.user; // This is the permanent user
+
+                        // 1. Get the anonymous user's data
+                        const anonProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, anonymousUser.uid);
+                        const anonDocSnap = await getDoc(anonProfileRef);
+                        
+                        if (anonDocSnap.exists()) {
+                            const anonData = anonDocSnap.data();
+                            
+                            // 2. Get the permanent user's data
+                            const googleProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, googleUser.uid);
+                            const googleDocSnap = await getDoc(googleProfileRef);
+
+                            let googleData = {};
+                            if (googleDocSnap.exists()) {
+                                googleData = googleDocSnap.data();
+                            } else {
+                                // If the Google user has no profile, create a base one
+                                googleData = {
+                                    unlockedLevel: 'easy',
+                                    highScores: { easy: 0, difficult: 0, hard: 0, pro: 0, ultraLegend: 0 },
+                                    displayName: googleUser.displayName || `User-${googleUser.uid.substring(0, 6)}`,
+                                    profilePicUrl: googleUser.photoURL || '',
+                                    socialLinks: { twitter: '', github: '' }
+                                };
+                            }
+
+                            // 3. Merge the data (highest scores win)
+                            const mergedHighScores = { ...googleData.highScores };
+                            for (const level of levelOrder) {
+                                const anonScore = anonData.highScores[level] || 0;
+                                const googleScore = googleData.highScores[level] || 0;
+                                mergedHighScores[level] = Math.max(anonScore, googleScore);
+                            }
+                            
+                            // Merge unlocked level (farthest level wins)
+                            const anonLevelIndex = levelOrder.indexOf(anonData.unlockedLevel || 'easy');
+                            const googleLevelIndex = levelOrder.indexOf(googleData.unlockedLevel || 'easy');
+                            const mergedUnlockedLevel = levelOrder[Math.max(anonLevelIndex, googleLevelIndex)];
+
+                            // 4. Create the final merged profile
+                            const mergedProfile = {
+                                ...googleData, // Use Google user's display name, pic, etc. as base
+                                highScores: mergedHighScores,
+                                unlockedLevel: mergedUnlockedLevel,
+                                // Recalculate total points
+                                totalPoints: Object.values(mergedHighScores).reduce((a, b) => a + b, 0),
+                                lastUpdated: serverTimestamp()
+                            };
+
+                            // 5. Save the merged profile to the Google user's doc
+                            await setDoc(googleProfileRef, mergedProfile);
+
+                            // 6. Delete the old anonymous profile doc
+                            await deleteDoc(anonProfileRef);
+
+                            // 7. The anonymous user auth account is now orphaned, which is fine.
+                            // Firebase Auth will clean it up eventually if it's not used.
+                            console.log("Data merged successfully.");
+                            
+                            // onAuthStateChanged will fire with the new Google user
+                            // and loadUserProfile will be called, loading the merged data.
+                            
+                        } else {
+                            // Anonymous user had no data, just sign in with Google
+                            // onAuthStateChanged will handle this automatically
+                            console.log("Anonymous user had no data to merge.");
+                        }
+
+                    } catch (signInError) {
+                        console.error("Error during merge sign-in:", signInError);
+                        alert("An error occurred while merging your accounts. Please try again.");
+                        showAuthOverlay(); // Go back to auth screen
+                    }
+
+                } else {
+                    // Some other error
+                    alert(`Error: ${error.message}`);
+                    overlays.loading.classList.add('hidden');
+                    overlays.auth.classList.remove('hidden');
                 }
             }
         }
@@ -1768,4 +1851,5 @@ const initialAuthToken = null;
     </script>
 </body>
 </html>
+
 
