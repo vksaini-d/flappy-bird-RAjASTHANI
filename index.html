@@ -274,10 +274,19 @@
         // --- Global Config & State ---
 
         // Firebase Config (using provided globals)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+       const appId = 'default-app-id';
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+
+const firebaseConfig ={
+  apiKey: "AIzaSyAL24a2dCPn9w_WXVTo-mjlhwLkKbKtZUs",
+  authDomain: "my-flappy-bird-game.firebaseapp.com",
+  projectId: "my-flappy-bird-game",
+  storageBucket: "my-flappy-bird-game.firebasestorage.app",
+  messagingSenderId: "95907851850",
+  appId: "1:95907851850:web:29b9de383d4bce835f00b3",
+  measurementId: "G-7K337S3WDQ"
+};
         // Firebase Services
         let app, db, auth;
         let userId = null;
@@ -1427,3 +1436,4 @@
 </body>
 
 </html>
+
