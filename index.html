@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Flappy Bird</title>
-     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>"> <!-- 1. Load Tailwind CSS --> <script src="https://cdn.tailwindcss.com"></script> <!-- 2. Load Google Font (Inter) --> <link rel="preconnect" href="https://fonts.googleapis.com">
     <!-- 1. Load Tailwind CSS (FIXED: Using pre-compiled CSS for better performance) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <!-- 2. Load Google Font (Inter) -->
@@ -118,10 +117,10 @@
             <canvas id="gameCanvas"></canvas>
 
             <!-- UI Overlays -->
-            <div id="overlays" class="absolute inset-0 flex items-center justify-center z-10">
+            <div id="overlays" class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
 
                 <!-- Loading Screen -->
-                <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md">
+                <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md pointer-events-auto">
                     <!-- Bird Loader -->
                     <div id="loader-container" class="flex flex-col items-center justify-center">
                         <!-- SVG will be injected here by JS -->
@@ -252,7 +251,7 @@
                 </div>
 
                 <!-- Start Screen -->
-                <div id="start-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                <div id="start-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center pointer-events-auto">
                     <!-- NEW: Responsive Font Size -->
                     <h2 class="text-6xl sm:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-4 pulse-text">FLAPPY BIRD</h2>
                     <p class="text-2xl text-yellow-400 mb-2">You are on level: <span id="start-level-display" class="font-bold"></span></p>
@@ -265,7 +264,7 @@
                 </div>
 
                 <!-- Game Over Screen -->
-                <div id="game-over-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                <div id="game-over-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center pointer-events-auto">
                     <!-- NEW: Responsive Font Size -->
                     <h2 class="text-5xl sm:text-6xl font-black text-red-500 mb-4">GAME OVER</h2>
                     <div class="text-2xl mb-6 bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
@@ -280,7 +279,7 @@
                 </div>
 
                 <!-- Paused Screen -->
-                <div id="paused-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center">
+                <div id="paused-overlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md p-4 text-center pointer-events-auto">
                     <h2 class="text-6xl font-black text-yellow-400 mb-8">PAUSED</h2>
                     <button id="resume-btn-overlay" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition duration-200">
                         Resume
@@ -435,6 +434,7 @@
   appId: "1:95907851850:web:29b9de383d4bce835f00b3",
   measurementId: "G-7K337S3WDQ"
 };
+     
         // =======================================================================
 
 
