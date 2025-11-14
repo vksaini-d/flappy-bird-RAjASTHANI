@@ -893,10 +893,7 @@ const initialAuthToken = null;
                             };
 
                             // 5. Save the merged profile to the Google user's doc
-                            await setDoc(googleProfileRef, mergedProfile);
-
-                            // 6. Delete the old anonymous profile doc
-                            await deleteDoc(anonProfileRef);
+                            await setDoc(googleProfileRef, mergedProfie);
 
                             // 7. The anonymous user auth account is now orphaned, which is fine.
                             // Firebase Auth will clean it up eventually if it's not used.
@@ -1851,5 +1848,6 @@ const initialAuthToken = null;
     </script>
 </body>
 </html>
+
 
 
