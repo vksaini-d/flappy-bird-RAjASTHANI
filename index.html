@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Modern Flappy Bird</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>">
-    <!-- 1. Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Modern Flappy Bird</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>"> <!-- 1. Load Tailwind CSS --> <script src="https://cdn.tailwindcss.com"></script> <!-- 2. Load Google Font (Inter) --> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- 1. Load Tailwind CSS (FIXED: Using pre-compiled CSS for better performance) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <!-- 2. Load Google Font (Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -343,29 +343,28 @@
     </div>
 
     <!-- 5. Custom Audio Files -->
-    <!-- IMPORTANT: Replace 'path/to/your/sound.mp3' with the actual paths to your sound files! -->
-    <!-- 5. Custom Audio Files -->
-<audio id="audio-flap" src="sounds/flap.mp3" preload="auto"></audio>
-<audio id="audio-score" src="sounds/score.mp3" preload="auto"></audio>
-<audio id="audio-crash" src="sounds/crash.mp3" preload="auto"></audio>
-<audio id="audio-start" src="sounds/start.mp3" preload="auto"></audio> <!-- For "Chidiya Ud" -->
-<audio id="audio-booster" src="sounds/booster.mp3" preload="auto"></audio> <!-- For "Aasmaan" -->
+    <!-- NEW: Added onerror alerts to help debug 404 errors -->
+    <audio id="audio-flap" src="sounds/flap.mp3" preload="auto" onerror="alert('Error: Could not load sound file \'sounds/flap.mp3\'. Check filename and path.')"></audio>
+    <audio id="audio-score" src="sounds/score.mp3" preload="auto" onerror="alert('Error: Could not load sound file \'sounds/score.mp3\'. Check filename and path.')"></audio>
+    <audio id="audio-crash" src="sounds/crash.mp3" preload="auto" onerror="alert('Error: Could not load sound file \'sounds/crash.mp3\'. Check filename and path.')"></audio>
+    <audio id="audio-start" src="sounds/start.mp3" preload="auto" onerror="alert('Error: Could not load sound file \'sounds/start.mp3\'. Check filename and path.')"></audio>
+    <audio id="audio-booster" src="sounds/booster.mp3" preload="auto" onerror="alert('Error: Could not load sound file \'sounds/booster.mp3\'. Check filename and path.')"></audio>
 
 
     <!-- 4. Firebase and Game Logic -->
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-       import { 
+        import { 
             getAuth, 
             signInAnonymously, 
             signInWithCustomToken, 
             onAuthStateChanged,
             GoogleAuthProvider,
             linkWithPopup,
-            PhoneAuthProvider, // NEW
-            RecaptchaVerifier, // NEW
-            linkWithCredential, // NEW
+            PhoneAuthProvider,
+            RecaptchaVerifier,
+            linkWithCredential,
             signInWithCredential // ADDED FOR MERGE
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
@@ -375,12 +374,17 @@
             getDoc, 
             collection, 
             onSnapshot,
-            serverTimestamp
+            serverTimestamp,
+            deleteDoc // ADDED FOR MERGE
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Global Config & State ---
 
-        const firebaseConfig ={
+        // =======================================================================
+        // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        // You can get this from your Firebase Project Settings.
+        // =======================================================================
+        const firebaseConfig =  {
   apiKey: "AIzaSyAL24a2dCPn9w_WXVTo-mjlhwLkKbKtZUs",
   authDomain: "my-flappy-bird-game.firebaseapp.com",
   projectId: "my-flappy-bird-game",
@@ -389,9 +393,15 @@
   appId: "1:95907851850:web:29b9de383d4bce835f00b3",
   measurementId: "G-7K337S3WDQ"
 };
-const appId = firebaseConfig.appId; 
-const initialAuthToken = null;
-        //END CONFIG
+        // =======================================================================
+
+
+        // DO NOT DELETE: This line is required for the app to find your data.
+        const appId = firebaseConfig.appId; 
+        const initialAuthToken = null; // This is correct for public hosting
+
+        // --- END OF CONFIG ---
+
         // Firebase Services
         let app, db, auth;
         let userId = null;
@@ -757,12 +767,17 @@ const initialAuthToken = null;
         // --- Firebase Functions ---
         async function initFirebase() {
             try {
-                if (Object.keys(firebaseConfig).length === 0) {
-                    throw new Error("Firebase config is empty. Make sure __firebase_config is set.");
+                // This check is important for when you deploy
+                if (!firebaseConfig || !firebaseConfig.apiKey) {
+                    throw new Error("Firebase config is missing or incomplete. Please paste it into the script tag.");
                 }
+                if (!appId) {
+                     throw new Error("appId is not defined. Make sure 'const appId = firebaseConfig.appId;' exists after your config object.");
+                }
+
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                auth = getAuth(app);
+                auth = getAuth(app); // auth is now defined at the module scope
 
                 // This is the core authentication flow
                 onAuthStateChanged(auth, async (user) => {
@@ -780,9 +795,18 @@ const initialAuthToken = null;
                             buttons.mainFooter.classList.add('hidden');
                         } else {
                             // User is SIGNED IN. Load their profile and start the game.
-                            displays.userStatus.textContent = `${user.displayName || 'User'}`;
+                            displays.userStatus.textContent = `${user.displayName || user.phoneNumber || 'User'}`;
                             // User is signed in, load profile and go to start screen
-                            await loadUserProfile(); 
+                            // FIX: Added try/catch here to handle load failures
+                            try {
+                                await loadUserProfile(); 
+                            } catch (loadError) {
+                                console.error("Failed to load profile for signed-in user:", loadError);
+                                // Show a specific error message if profile load fails for a known user
+                                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error loading your profile.</h2><p class="text-sm text-gray-300">${loadError.message}</p><p class="text-sm text-yellow-400 mt-2">Please check Firestore rules and try refreshing.</p>`;
+                                overlays.loading.classList.remove('hidden');
+                                overlays.auth.classList.add('hidden');
+                            }
                         }
                     } else {
                         // No user at all. Sign them in anonymously first.
@@ -797,11 +821,12 @@ const initialAuthToken = null;
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 displays.userStatus.textContent = "Firebase Error";
-                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error connecting to Firebase.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Check your Firestore security rules and config.</p>`;
+                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error connecting to Firebase.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Did you paste your firebaseConfig correctly?</p>`;
             }
         }
 
-       // This function is called by the "Maybe Later (Play as Guest)" button
+        // This function is called by the "Maybe Later (Play as Guest)" button
+        // NEW: Added try/catch to show alerts if it fails (due to rules)
         async function continueAsGuest() {
             overlays.auth.classList.add('hidden');
             overlays.loading.classList.remove('hidden'); // Show loading just in case
@@ -809,12 +834,24 @@ const initialAuthToken = null;
                 await loadUserProfile(); // This will load/create the anonymous profile and go to 'start'
             } catch (error) {
                 console.error("Error loading guest profile:", error);
+                // This alert is crucial for debugging rules
                 alert(`Failed to load guest profile: ${error.message}\n\nPlease check your Firestore Security Rules!`);
                 // Show the auth screen again
                 overlays.loading.classList.add('hidden');
                 overlays.auth.classList.remove('hidden');
             }
         }
+
+
+        // Function to link anonymous account with Google
+        // NEW: This is the full version with the account-merge fix
+        async function linkWithGoogle() {
+            // Guard clause to prevent error if auth isn't ready
+            if (!auth || !auth.currentUser || !auth.currentUser.isAnonymous) {
+                console.error("linkWithGoogle called but user is not anonymous or auth is not ready.", auth);
+                return;
+            }
+            
             const provider = new GoogleAuthProvider();
             try {
                 // Show loading screen while popup is active
@@ -900,11 +937,13 @@ const initialAuthToken = null;
                             };
 
                             // 5. Save the merged profile to the Google user's doc
-                            await setDoc(googleProfileRef, mergedProfie);
+                            await setDoc(googleProfileRef, mergedProfile);
 
-                            // 7. The anonymous user auth account is now orphaned, which is fine.
-                            // Firebase Auth will clean it up eventually if it's not used.
-                            console.log("Data merged successfully.");
+                            // 6. Delete the old anonymous profile doc
+                            // We comment this out, as it can fail with strict rules.
+                            // The orphaned doc is harmless.
+                            // await deleteDoc(anonProfileRef); 
+                            console.log("Data merged successfully. Old guest profile was not deleted, which is safe.");
                             
                             // onAuthStateChanged will fire with the new Google user
                             // and loadUserProfile will be called, loading the merged data.
@@ -917,7 +956,7 @@ const initialAuthToken = null;
 
                     } catch (signInError) {
                         console.error("Error during merge sign-in:", signInError);
-                        alert("An error occurred while merging your accounts. Please try again.");
+                        alert("An error occurred while merging your accounts. Please try again. Check Firestore rules.");
                         showAuthOverlay(); // Go back to auth screen
                     }
 
@@ -928,6 +967,7 @@ const initialAuthToken = null;
                     overlays.auth.classList.remove('hidden');
                 }
             }
+        }
 
         // --- NEW: Phone Sign-In Functions ---
 
@@ -935,44 +975,63 @@ const initialAuthToken = null;
          * Initializes the reCAPTCHA verifier.
          */
         function initRecaptcha() {
-            if (recaptchaVerifier) {
-                // If it already exists, just clear the container and render again
-                document.getElementById('recaptcha-container').innerHTML = '';
-                recaptchaVerifier.render();
-                buttons.sendCode.disabled = true;
-                buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
-                buttons.sendCode.classList.add('bg-gray-500');
-                buttons.sendCode.classList.remove('bg-green-500');
+            // Check if element exists first
+            const recaptchaContainer = document.getElementById('recaptcha-container');
+            if (!recaptchaContainer) {
+                console.error('reCAPTCHA container not found');
                 return;
             }
+            
+            // Clear any old reCAPTCHA
+            recaptchaContainer.innerHTML = '';
+            
+            // If one already exists, just re-render it
+            if (recaptchaVerifier) {
+                try {
+                    recaptchaVerifier.render();
+                    setSendCodeButtonState(false);
+                    return;
+                } catch (e) {
+                    console.warn("Could not re-render old recaptcha, creating new one.", e);
+                    // If re-render fails, fall through to create a new one
+                }
+            }
+
             try {
                 recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                     'size': 'normal', // Use 'normal' to show the "I'm not a robot" checkbox
                     'callback': (response) => {
                         // reCAPTCHA solved, enable send code button
-                        buttons.sendCode.disabled = false;
-                        buttons.sendCode.textContent = 'Send Code';
-                        buttons.sendCode.classList.remove('bg-gray-500');
-                        buttons.sendCode.classList.add('bg-green-500');
+                        setSendCodeButtonState(true);
                     },
                     'expired-callback': () => {
                         // Response expired. Ask user to solve reCAPTCHA again.
-                        buttons.sendCode.disabled = true;
-                        buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
-                        buttons.sendCode.classList.add('bg-gray-500');
-                        buttons.sendCode.classList.remove('bg-green-500');
+                        setSendCodeButtonState(false);
                     }
                 });
                 recaptchaVerifier.render(); // Render the reCAPTCHA
-                buttons.sendCode.disabled = true;
-                buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
-                buttons.sendCode.classList.add('bg-gray-500');
-                buttons.sendCode.classList.remove('bg-green-500');
+                setSendCodeButtonState(false); // Start disabled
             } catch (error) {
                 console.error("Error initializing reCAPTCHA:", error);
                 document.getElementById('phone-auth-overlay').innerHTML += `<p class="text-red-500 text-xs mt-2">Could not load reCAPTCHA. Phone sign-in is disabled. ${error.message}</p>`;
             }
         }
+
+        /** Helper to manage Send Code button state **/
+        function setSendCodeButtonState(enabled) {
+             if (enabled) {
+                buttons.sendCode.disabled = false;
+                buttons.sendCode.textContent = 'Send Code';
+                buttons.sendCode.classList.remove('bg-gray-500', 'opacity-50');
+                buttons.sendCode.classList.add('bg-green-500', 'hover:bg-green-400');
+             } else {
+                buttons.sendCode.disabled = true;
+                buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
+                buttons.sendCode.classList.add('bg-gray-500', 'opacity-50');
+                buttons.sendCode.classList.remove('bg-green-500', 'hover:bg-green-400');
+             }
+        }
+
 
         /**
          * Called when "Send Code" button is clicked.
@@ -985,7 +1044,7 @@ const initialAuthToken = null;
             
             const phoneNumber = document.getElementById('phone-number-input').value;
             if (!phoneNumber || phoneNumber.length < 10) {
-                alert("Please enter a valid phone number with country code.");
+                alert("Please enter a valid phone number with country code (e.g., +1, +91).");
                 return;
             }
             
@@ -1001,17 +1060,20 @@ const initialAuthToken = null;
                 overlays.phoneVerify.classList.remove('hidden');
                 document.getElementById('verification-code-message').textContent = `We sent a 6-digit code to ${phoneNumber}.`;
                 buttons.sendCode.disabled = false;
-                buttons.sendCode.textContent = 'Send Code';
+                // state will be reset by initRecaptcha if user goes back
             } catch (error) {
                 console.error("Error sending SMS:", error);
                 alert(`Error sending code: ${error.message}`);
                 buttons.sendCode.disabled = false;
-                buttons.sendCode.textContent = 'Send Code';
                 // Reset reCAPTCHA
                 try {
-                    recaptchaVerifier.render().then(function(widgetId) {
-                        grecaptcha.reset(widgetId);
-                    });
+                   // This is the official way to reset the reCAPTCHA widget
+                   if (recaptchaVerifier) {
+                        recaptchaVerifier.render().then(function(widgetId) {
+                            grecaptcha.reset(widgetId);
+                            setSendCodeButtonState(false);
+                        });
+                   }
                 } catch(e) { console.error("Error resetting recaptcha", e); }
             }
         }
@@ -1051,6 +1113,7 @@ const initialAuthToken = null;
                 if (error.code === 'auth/invalid-verification-code') {
                     alert("Invalid code. Please try again.");
                 } else if (error.code === 'auth/credential-already-in-use') {
+                    // You would need to add merge logic for phone here, similar to Google
                     alert("This phone number is already linked to another account.");
                 } else {
                     alert(`Error: ${error.message}`);
@@ -1067,8 +1130,21 @@ const initialAuthToken = null;
             overlays.phoneAuth.classList.add('hidden');
             overlays.phoneVerify.classList.add('hidden');
             overlays.auth.classList.remove('hidden');
-            // We don't need to reset reCAPTCHA here,
-            // initRecaptcha() will be called again if they click 'Sign in with Phone'.
+            
+            // Reset phone auth state
+            document.getElementById('phone-number-input').value = '';
+            document.getElementById('verification-code-input').value = '';
+            confirmationResult = null;
+            if (recaptchaVerifier) {
+                try {
+                    // Clear the verifier to force a new one next time
+                    recaptchaVerifier.clear();
+                    recaptchaVerifier = null;
+                } catch (e) {
+                    console.warn("Could not clear recaptcha.", e);
+                }
+            }
+            document.getElementById('recaptcha-container').innerHTML = '';
         }
         
         // --- END: Phone Sign-In Functions ---
@@ -1077,11 +1153,12 @@ const initialAuthToken = null;
         async function loadUserProfile() {
             if (!userId) {
                 console.error("loadUserProfile called with no userId");
-                return;
+                // NEW: Throw an error to be caught by continueAsGuest
+                throw new Error("User ID is not available.");
             }
             if (!appId) {
                 console.error("loadUserProfile called with no appId");
-                return; // This stops the crash
+                throw new Error("Application ID is not available.");
             }
             
             const profileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, userId);
@@ -1106,10 +1183,11 @@ const initialAuthToken = null;
             } catch (error) {
                 console.error("Error loading user profile:", error);
                 overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error loading profile.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Check your Firestore security rules.</p>`;
-                // ADDED: This makes the error detectable by continueAsGuest
-                throw error; 
+                // NEW: This makes the error detectable by the function that calls this
+                throw error;
             }
         }
+
         async function saveUserProfile(isNew = false) {
             if (!userId) return;
             const totalPoints = Object.values(userProfile.highScores).reduce((a, b) => a + b, 0);
@@ -1760,10 +1838,12 @@ const initialAuthToken = null;
             }
         });
         document.addEventListener('mousedown', (e) => handleFlap(e));
+        
+        // NEW: Fixed passive listener warning
         document.addEventListener('touchstart', (e) => {
             e.preventDefault();
             handleFlap(e);
-        });
+        }, { passive: false });
 
         buttons.restart.addEventListener('click', () => {
             startGame();
@@ -1863,8 +1943,3 @@ const initialAuthToken = null;
     </script>
 </body>
 </html>
-
-
-
-
-
