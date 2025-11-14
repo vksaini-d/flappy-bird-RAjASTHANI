@@ -801,13 +801,20 @@ const initialAuthToken = null;
             }
         }
 
-        // This function is called by the "Maybe Later (Play as Guest)" button
-     // Function to link anonymous account with Google
-        async function linkWithGoogle() {
-            if (!auth.currentUser || !auth.currentUser.isAnonymous) {
-                console.log("User is not anonymous, no need to link.");
-                return;
+       // This function is called by the "Maybe Later (Play as Guest)" button
+        async function continueAsGuest() {
+            overlays.auth.classList.add('hidden');
+            overlays.loading.classList.remove('hidden'); // Show loading just in case
+            try {
+                await loadUserProfile(); // This will load/create the anonymous profile and go to 'start'
+            } catch (error) {
+                console.error("Error loading guest profile:", error);
+                alert(`Failed to load guest profile: ${error.message}\n\nPlease check your Firestore Security Rules!`);
+                // Show the auth screen again
+                overlays.loading.classList.add('hidden');
+                overlays.auth.classList.remove('hidden');
             }
+        }
             const provider = new GoogleAuthProvider();
             try {
                 // Show loading screen while popup is active
@@ -1069,7 +1076,15 @@ const initialAuthToken = null;
 
 
         async function loadUserProfile() {
-            if (!userId) return;
+            if (!userId) {
+                console.error("loadUserProfile called with no userId");
+                return;
+            }
+            if (!appId) {
+                console.error("loadUserProfile called with no appId");
+                return; // This stops the crash
+            }
+            
             const profileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, userId);
             try {
                 const docSnap = await getDoc(profileRef);
@@ -1077,12 +1092,12 @@ const initialAuthToken = null;
                     const data = docSnap.data();
                     userProfile.unlockedLevel = data.unlockedLevel || 'easy';
                     userProfile.highScores = { ...userProfile.highScores, ...data.highScores };
-                    userProfile.displayName = data.displayName || auth.currentUser.displayName || `User-${userId.substring(0, 6)}`;
+                    userProfile.displayName = data.displayName || auth.currentUser.displayName || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
                     userProfile.profilePicUrl = data.profilePicUrl || auth.currentUser.photoURL || '';
                     userProfile.socialLinks = { ...userProfile.socialLinks, ...data.socialLinks };
                 } else {
                     // New user, use auth details if available
-                    userProfile.displayName = auth.currentUser.displayName || `User-${userId.substring(0, 6)}`;
+                    userProfile.displayName = auth.currentUser.displayName || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
                     userProfile.profilePicUrl = auth.currentUser.photoURL || '';
                     await saveUserProfile(true);
                 }
@@ -1092,9 +1107,10 @@ const initialAuthToken = null;
             } catch (error) {
                 console.error("Error loading user profile:", error);
                 overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error loading profile.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Check your Firestore security rules.</p>`;
+                // ADDED: This makes the error detectable by continueAsGuest
+                throw error; 
             }
         }
-
         async function saveUserProfile(isNew = false) {
             if (!userId) return;
             const totalPoints = Object.values(userProfile.highScores).reduce((a, b) => a + b, 0);
@@ -1848,6 +1864,7 @@ const initialAuthToken = null;
     </script>
 </body>
 </html>
+
 
 
 
