@@ -118,10 +118,12 @@
             <canvas id="gameCanvas"></canvas>
 
             <!-- UI Overlays -->
-            <div id="overlays" class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+           <!-- UI Overlays -->
+<div id="overlays" class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
 
                 <!-- Loading Screen -->
-                <div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md pointer-events-auto">
+             <!-- Loading Screen -->
+<div id="loading-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center backdrop-blur-md pointer-events-auto">
                     <!-- Bird Loader -->
                     <div id="loader-container" class="flex flex-col items-center justify-center">
                         <!-- SVG will be injected here by JS -->
@@ -130,7 +132,8 @@
                 </div>
 
                 <!-- NEW: Auth Overlay (Replaces Start Screen as initial view) -->
-                <div id="auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                <!-- NEW: Auth Overlay (Replaces Start Screen as initial view) -->
+<div id="auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
                         
                         <!-- Modal Header -->
@@ -179,7 +182,8 @@
                 </div>
 
                 <!-- NEW: Email Auth Overlay -->
-                <div id="email-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+              <!-- NEW: Email Auth Overlay -->
+<div id="email-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700">
                         <h3 class="text-2xl font-bold text-white mb-6 text-center">Sign in with Email</h3>
                         <div class="space-y-4">
@@ -209,7 +213,8 @@
                 </div>
 
                 <!-- Phone Auth Overlay -->
-                <div id="phone-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+               <!-- Phone Auth Overlay -->
+<div id="phone-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
                         <h3 class="text-2xl font-bold text-white mb-6">Sign in with Phone</h3>
                         <div class="space-y-4">
@@ -232,7 +237,8 @@
                 </div>
 
                 <!-- Phone Verify Overlay -->
-                <div id="phone-verify-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+               <!-- Phone Verify Overlay -->
+<div id="phone-verify-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md pointer-events-auto">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
                         <h3 class="text-2xl font-bold text-white mb-6">Enter Verification Code</h3>
                         <div class="space-y-4">
@@ -2151,4 +2157,5 @@
     </script>
 </body>
 </html>
+
 
