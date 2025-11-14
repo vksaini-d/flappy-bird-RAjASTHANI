@@ -843,7 +843,7 @@
         }
 
 
-        // Function to link anonymous account with Google
+// Function to link anonymous account with Google
         // NEW: This is the full version with the account-merge fix
         async function linkWithGoogle() {
             // Guard clause to prevent error if auth isn't ready
@@ -914,10 +914,14 @@
                             }
 
                             // 3. Merge the data (highest scores win)
-                            const mergedHighScores = { ...googleData.highScores };
+                            // NEW: Defensive checks for null or undefined highScores
+                            const anonHighScores = anonData.highScores || {};
+                            const googleHighScores = googleData.highScores || { easy: 0, difficult: 0, hard: 0, pro: 0, ultraLegend: 0 };
+                            const mergedHighScores = { ...googleHighScores };
+
                             for (const level of levelOrder) {
-                                const anonScore = anonData.highScores[level] || 0;
-                                const googleScore = googleData.highScores[level] || 0;
+                                const anonScore = anonHighScores[level] || 0;
+                                const googleScore = googleHighScores[level] || 0;
                                 mergedHighScores[level] = Math.max(anonScore, googleScore);
                             }
                             
@@ -1943,3 +1947,4 @@
     </script>
 </body>
 </html>
+
