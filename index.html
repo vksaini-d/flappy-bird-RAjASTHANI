@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> RAJASTHANI Flappy Bird</title>
+    <title> Modern Flappy Bird</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>">
     <!-- 1. Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -102,8 +102,9 @@
         <header id="main-header" class="flex-shrink-0 bg-gray-800 p-3 shadow-lg z-20">
             <div class="container mx-auto flex justify-between items-center max-w-7xl">
                 <h1 class="text-xl font-bold text-cyan-400">Modern Flappy Bird</h1>
-                <button id="pause-toggle-btn" class="hidden bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1 px-3 rounded-lg text-xs transition duration-200">Pause</button>
-                <div class="text-right text-xs">
+                <!-- Sign In Button Removed from here -->
+                <button id="pause-toggle-btn" class="hidden bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1 px-3 rounded-lg text-xs transition duration-200 ml-auto">Pause</button>
+                <div class="text-right text-xs ml-4">
                     <div id="user-status" class="font-mono text-gray-400">Connecting...</div>
                     <div class="font-semibold text-gray-200">Level: <span id="current-level-display" class="text-yellow-400">Easy</span></div>
                 </div>
@@ -125,6 +126,92 @@
                         <!-- SVG will be injected here by JS -->
                     </div>
                     <p class="text-lg text-gray-300 mt-4">Authenticating with Firebase...</p>
+                </div>
+
+                <!-- NEW: Auth Overlay (Replaces Start Screen as initial view) -->
+                <div id="auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                    <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
+                        
+                        <!-- Modal Header -->
+                        <div class="flex justify-center items-center mb-4 flex-shrink-0">
+                             <h3 class="text-2xl font-bold text-white">Save Your Progress</h3>
+                             <!-- Close button removed to make choice mandatory -->
+                        </div>
+        
+                        <!-- Modal Content -->
+                        <div class="space-y-6">
+                            <p class="text-2xl font-bold text-yellow-300">
+                                SIGN IN KARLE NHI TOH TERE SARI PROGRESS CHALE JAYE GE
+                            </p>
+                            <p class="text-gray-300">
+                                Sign in to permanently save your high scores and unlocked levels.
+                            </p>
+                            
+                            <button id="google-sign-in-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-100 transition duration-200 flex items-center justify-center space-x-2">
+                                <!-- Google Logo SVG -->
+                                <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                                    <path fill="#34A853" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
+                                    <path fill="#FBBC05" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                                    <path fill="#EA4335" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C41.382 36.666 44 31.134 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                                </svg>
+                                <span>Sign in with Google</span>
+                            </button>
+                            
+                            <!-- NEW: Phone Sign-In Button -->
+                            <button id="phone-sign-in-btn" class="w-full bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-blue-400 transition duration-200 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"></path></svg>
+                                <span>Sign in with Phone</span>
+                            </button>
+                            
+                            <button id="maybe-later-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                Maybe Later (Play as Guest)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Phone Auth Overlay -->
+                <div id="phone-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                    <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
+                        <h3 class="text-2xl font-bold text-white mb-6">Sign in with Phone</h3>
+                        <div class="space-y-4">
+                            <p class="text-gray-300 text-sm">
+                                Enter your phone number with country code (e.g., +91).
+                            </p>
+                            <input type="tel" id="phone-number-input" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-3 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" placeholder="+91 12345 67890">
+                            
+                            <!-- reCAPTCHA container. Will be made visible by script if needed. -->
+                            <div id="recaptcha-container" class="flex justify-center"></div>
+
+                            <button id="send-code-btn" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                Send Code
+                            </button>
+                            <button id="back-to-auth-btn-1" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Phone Verify Overlay -->
+                <div id="phone-verify-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                    <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
+                        <h3 class="text-2xl font-bold text-white mb-6">Enter Verification Code</h3>
+                        <div class="space-y-4">
+                            <p class="text-gray-300 text-sm" id="verification-code-message">
+                                We sent a 6-digit code to your phone.
+                            </p>
+                            <input type="text" id="verification-code-input" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-3 text-white text-center text-2xl tracking-[.5em]" placeholder="123456" maxlength="6">
+                            
+                            <button id="verify-code-btn" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                Verify & Sign In
+                            </button>
+                            <button id="back-to-auth-btn-2" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                Back
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Start Screen -->
@@ -182,7 +269,9 @@
             </div>
         </main>
         
-        <!-- NEW: Leaderboard Modal (Renamed from stats-modal) -->
+        <!-- Sign-In Modal (Renamed to auth-overlay and moved up) -->
+
+        <!-- Leaderboard Modal -->
         <div id="leaderboard-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
             <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col border border-gray-700">
                 
@@ -196,8 +285,6 @@
                      </button>
                 </div>
                 
-                <!-- REMOVED: Tabs -->
-
                 <!-- Tab Content -->
                 <div class="overflow-y-auto">
                     <!-- Leaderboard Content -->
@@ -212,7 +299,7 @@
             </div>
         </div>
 
-        <!-- NEW: My Profile Modal (Separate from stats) -->
+        <!-- My Profile Modal -->
         <div id="profile-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
             <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col border border-gray-700">
                 
@@ -226,8 +313,6 @@
                      </button>
                 </div>
                 
-                <!-- REMOVED: Tabs -->
-
                 <!-- Profile Content -->
                 <div class="overflow-y-auto">
                     <div id="my-profile-content">
@@ -257,11 +342,31 @@
         </footer>
     </div>
 
+    <!-- 5. Custom Audio Files -->
+    <!-- IMPORTANT: Replace 'path/to/your/sound.mp3' with the actual paths to your sound files! -->
+    <!-- 5. Custom Audio Files -->
+<audio id="audio-flap" src="sounds/flap.mp3" preload="auto"></audio>
+<audio id="audio-score" src="sounds/score.mp3" preload="auto"></audio>
+<audio id="audio-crash" src="sounds/crash.mp3" preload="auto"></audio>
+<audio id="audio-start" src="sounds/start.mp3" preload="auto"></audio> <!-- For "Chidiya Ud" -->
+<audio id="audio-booster" src="sounds/booster.mp3" preload="auto"></audio> <!-- For "Aasmaan" -->
+
+
     <!-- 4. Firebase and Game Logic -->
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            linkWithPopup,
+            PhoneAuthProvider, // NEW
+            RecaptchaVerifier, // NEW
+            linkWithCredential // NEW
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
@@ -274,12 +379,7 @@
 
         // --- Global Config & State ---
 
-        // Firebase Config (using provided globals)
-       const appId = 'default-app-id';
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-
-const firebaseConfig ={
+        const firebaseConfig ={
   apiKey: "AIzaSyAL24a2dCPn9w_WXVTo-mjlhwLkKbKtZUs",
   authDomain: "my-flappy-bird-game.firebaseapp.com",
   projectId: "my-flappy-bird-game",
@@ -288,11 +388,16 @@ const firebaseConfig ={
   appId: "1:95907851850:web:29b9de383d4bce835f00b3",
   measurementId: "G-7K337S3WDQ"
 };
+
         // Firebase Services
         let app, db, auth;
         let userId = null;
         let isAuthReady = false;
         let unsubscribeFromProfiles; // To stop onSnapshot listener
+
+        // NEW: Phone Auth Vars
+        let recaptchaVerifier;
+        let confirmationResult;
 
         // NEW: Audio Context
         let audioCtx;
@@ -321,12 +426,21 @@ const firebaseConfig ={
         const ctx = canvas.getContext('2d');
         const overlays = {
             loading: document.getElementById('loading-overlay'),
+            auth: document.getElementById('auth-overlay'), // This is the new root screen
+            phoneAuth: document.getElementById('phone-auth-overlay'), // NEW
+            phoneVerify: document.getElementById('phone-verify-overlay'), // NEW
             start: document.getElementById('start-overlay'),
             gameOver: document.getElementById('game-over-overlay'),
             paused: document.getElementById('paused-overlay'),
             gameStartText: document.getElementById('game-start-text-overlay'),
             gameOverText: document.getElementById('game-over-text-overlay'),
             boosterText: document.getElementById('booster-text-overlay'),
+        };
+        // Modals object
+        const modals = {
+            // signIn modal removed, it's now 'auth' overlay
+            leaderboard: document.getElementById('leaderboard-modal'),
+            profile: document.getElementById('profile-modal'),
         };
         const displays = {
             userStatus: document.getElementById('user-status'),
@@ -340,8 +454,8 @@ const firebaseConfig ={
             levelSelectContainer: document.getElementById('level-select-container'),
             restart: document.getElementById('restart-btn'),
             changeLevel: document.getElementById('change-level-btn'),
-            closeLeaderboardModal: document.getElementById('close-leaderboard-modal-btn'), // NEW ID
-            closeProfileModal: document.getElementById('close-profile-modal-btn'), // NEW
+            closeLeaderboardModal: document.getElementById('close-leaderboard-modal-btn'),
+            closeProfileModal: document.getElementById('close-profile-modal-btn'),
             pauseToggle: document.getElementById('pause-toggle-btn'),
             resumeOverlay: document.getElementById('resume-btn-overlay'),
             mainHeader: document.getElementById('main-header'),
@@ -349,11 +463,17 @@ const firebaseConfig ={
             footerGameBtn: document.getElementById('footer-game-btn'),
             footerStatsBtn: document.getElementById('footer-stats-btn'),
             footerProfileBtn: document.getElementById('footer-profile-btn'),
+            // Auth Overlay Buttons
+            googleSignIn: document.getElementById('google-sign-in-btn'),
+            phoneSignIn: document.getElementById('phone-sign-in-btn'), // NEW
+            maybeLater: document.getElementById('maybe-later-btn'),
+            // NEW: Phone Auth Buttons
+            sendCode: document.getElementById('send-code-btn'),
+            verifyCode: document.getElementById('verify-code-btn'),
+            backToAuth1: document.getElementById('back-to-auth-btn-1'),
+            backToAuth2: document.getElementById('back-to-auth-btn-2')
         };
         
-        // NEW: Modal Elements
-        const leaderboardModal = document.getElementById('leaderboard-modal'); // NEW ID
-        const profileModal = document.getElementById('profile-modal'); // NEW
         const leaderboardList = document.getElementById('leaderboard-list');
         const myProfileContent = document.getElementById('my-profile-content');
         
@@ -376,82 +496,66 @@ const firebaseConfig ={
         
         /**
          * Initializes the AudioContext. Must be called after a user interaction.
+         * (Still needed for the browser to allow any audio to play)
          */
         function initAudio() {
             if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // This is just to "unlock" audio playback in the browser.
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                } catch(e) {
+                    console.error("Web Audio API not supported, audio may not play.");
+                }
             }
         }
 
         /**
-         * A simple procedural sound generator.
+         * UPDATED: Plays audio files from <audio> elements.
          */
         const SoundManager = {
             play(soundName) {
-                if (!audioCtx) return; // Audio not initialized
-
-                const now = audioCtx.currentTime;
-                let oscillator, gain;
-
+                // We don't need audioCtx to play <audio> elements,
+                // but initAudio() must have been called once by user interaction.
+                
+                let audio;
                 try {
-                    oscillator = audioCtx.createOscillator();
-                    gain = audioCtx.createGain();
-                    oscillator.connect(gain);
-                    gain.connect(audioCtx.destination);
-
                     switch (soundName) {
                         case 'flap':
-                            oscillator.type = 'sine';
-                            gain.gain.setValueAtTime(0.3, now);
-                            oscillator.frequency.setValueAtTime(300, now);
-                            oscillator.frequency.linearRampToValueAtTime(400, now + 0.05);
-                            gain.gain.linearRampToValueAtTime(0, now + 0.1);
-                            oscillator.start(now);
-                            oscillator.stop(now + 0.1);
+                            audio = document.getElementById('audio-flap');
                             break;
-
                         case 'score':
-                            oscillator.type = 'sine';
-                            gain.gain.setValueAtTime(0.2, now);
-                            oscillator.frequency.setValueAtTime(600, now);
-                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.05);
-                            gain.gain.linearRampToValueAtTime(0, now + 0.1);
-                            oscillator.start(now);
-                            oscillator.stop(now + 0.1);
+                            audio = document.getElementById('audio-score');
                             break;
-
                         case 'crash':
-                            oscillator.type = 'sawtooth';
-                            gain.gain.setValueAtTime(0.5, now);
-                            oscillator.frequency.setValueAtTime(200, now);
-                            oscillator.frequency.linearRampToValueAtTime(50, now + 0.2);
-                            gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                            oscillator.start(now);
-                            oscillator.stop(now + 0.2);
+                            audio = document.getElementById('audio-crash');
                             break;
-                            
                         case 'start': // "Chidiya Ud"
-                            oscillator.type = 'triangle';
-                            gain.gain.setValueAtTime(0.3, now);
-                            oscillator.frequency.setValueAtTime(400, now);
-                            oscillator.frequency.linearRampToValueAtTime(600, now + 0.1);
-                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.2);
-                            gain.gain.linearRampToValueAtTime(0, now + 0.3);
-                            oscillator.start(now);
-                            oscillator.stop(now + 0.3);
+                            audio = document.getElementById('audio-start');
                             break;
-                            
                         case 'booster': // "Aasmaan"
-                            oscillator.type = 'square';
-                            gain.gain.setValueAtTime(0.2, now);
-                            oscillator.frequency.setValueAtTime(600, now);
-                            oscillator.frequency.linearRampToValueAtTime(800, now + 0.1);
-                            oscillator.frequency.linearRampToValueAtTime(1000, now + 0.2);
-                            oscillator.frequency.linearRampToValueAtTime(1200, now + 0.3);
-                            gain.gain.linearRampToValueAtTime(0, now + 0.4);
-                            oscillator.start(now);
-                            oscillator.stop(now + 0.4);
+                            audio = document.getElementById('audio-booster');
                             break;
+                        default:
+                            return; // No sound found
+                    }
+
+                    if (audio) {
+                        // Check if the audio is ready to play
+                        if (audio.readyState >= 2) {
+                             audio.currentTime = 0; // Rewind to start (for fast re-play)
+                             audio.play().catch(e => console.error("Audio play failed:", e));
+                        } else {
+                            // If not ready, listen for when it can play
+                            audio.addEventListener('canplay', () => {
+                                audio.currentTime = 0;
+                                audio.play().catch(e => console.error("Audio play failed:", e));
+                            }, { once: true });
+                        }
+                    } else {
+                        console.warn(`Audio element not found for: ${soundName}. Did you add it to the HTML?`);
                     }
                 } catch (e) {
                     console.error("Error playing sound:", e);
@@ -656,35 +760,231 @@ const firebaseConfig ={
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+
+                // This is the core authentication flow
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        displays.userStatus.textContent = `User ID: ${userId.substring(0, 10)}...`;
                         isAuthReady = true;
-                        await loadUserProfile();
+
+                        if (user.isAnonymous) {
+                            // User is a GUEST. Show them the Auth screen.
+                            displays.userStatus.textContent = `Guest: ${userId.substring(0, 6)}...`;
+                            // Show the auth overlay instead of loading the profile
+                            overlays.loading.classList.add('hidden');
+                            overlays.auth.classList.remove('hidden');
+                            buttons.mainHeader.classList.add('hidden');
+                            buttons.mainFooter.classList.add('hidden');
+                        } else {
+                            // User is SIGNED IN. Load their profile and start the game.
+                            displays.userStatus.textContent = `${user.displayName || 'User'}`;
+                            // User is signed in, load profile and go to start screen
+                            await loadUserProfile(); 
+                        }
                     } else {
-                        signInUser();
+                        // No user at all. Sign them in anonymously first.
+                        // This will trigger onAuthStateChanged again, and the 'user.isAnonymous' block will run.
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
                     }
                 });
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 displays.userStatus.textContent = "Firebase Error";
-                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error connecting to Firebase.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Did you set up the __firebase_config environment variable and authorize this domain in Firebase?</p>`;
+                overlays.loading.innerHTML = `<h2 class="text-2xl text-red-500">Error connecting to Firebase.</h2><p class="text-sm text-gray-300">${error.message}</p><p class="text-sm text-yellow-400 mt-2">Check your Firestore security rules and config.</p>`;
             }
         }
 
-        async function signInUser() {
-             try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+        // This function is called by the "Maybe Later (Play as Guest)" button
+        async function continueAsGuest() {
+            overlays.auth.classList.add('hidden');
+            overlays.loading.classList.remove('hidden'); // Show loading just in case
+            await loadUserProfile(); // This will load/create the anonymous profile and go to 'start'
+        }
+
+
+        // Function to link anonymous account with Google
+        async function linkWithGoogle() {
+            if (!auth.currentUser || !auth.currentUser.isAnonymous) {
+                console.log("User is not anonymous, no need to link.");
+                return;
+            }
+            const provider = new GoogleAuthProvider();
+            try {
+                // Show loading screen while popup is active
+                overlays.auth.classList.add('hidden');
+                overlays.loading.classList.remove('hidden');
+
+                const result = await linkWithPopup(auth.currentUser, provider);
+                const user = result.user;
+                
+                // User is now permanent. 
+                // onAuthStateChanged will fire again automatically with the new non-anonymous user.
+                // The `else` block in onAuthStateChanged will run, calling loadUserProfile().
+                
+                // We just need to wait for onAuthStateChanged to handle it.
+                console.log("Account linked!", user.displayName);
+
             } catch (error) {
-                console.error("Authentication failed:", error);
-                displays.userStatus.textContent = "Auth Error";
+                console.error("Error linking with Google:", error);
+                // If they cancel or error, show auth screen again
+                overlays.loading.classList.add('hidden');
+                overlays.auth.classList.remove('hidden');
+                if (error.code === 'auth/credential-already-in-use') {
+                    // This is a complex state. For now, just alert the user.
+                    // A real solution would involve signing in with the credential and merging data.
+                    alert("This Google account is already linked to another user.");
+                }
             }
         }
+
+        // --- NEW: Phone Sign-In Functions ---
+
+        /**
+         * Initializes the reCAPTCHA verifier.
+         */
+        function initRecaptcha() {
+            if (recaptchaVerifier) {
+                // If it already exists, just clear the container and render again
+                document.getElementById('recaptcha-container').innerHTML = '';
+                recaptchaVerifier.render();
+                buttons.sendCode.disabled = true;
+                buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
+                buttons.sendCode.classList.add('bg-gray-500');
+                buttons.sendCode.classList.remove('bg-green-500');
+                return;
+            }
+            try {
+                recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'normal', // Use 'normal' to show the "I'm not a robot" checkbox
+                    'callback': (response) => {
+                        // reCAPTCHA solved, enable send code button
+                        buttons.sendCode.disabled = false;
+                        buttons.sendCode.textContent = 'Send Code';
+                        buttons.sendCode.classList.remove('bg-gray-500');
+                        buttons.sendCode.classList.add('bg-green-500');
+                    },
+                    'expired-callback': () => {
+                        // Response expired. Ask user to solve reCAPTCHA again.
+                        buttons.sendCode.disabled = true;
+                        buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
+                        buttons.sendCode.classList.add('bg-gray-500');
+                        buttons.sendCode.classList.remove('bg-green-500');
+                    }
+                });
+                recaptchaVerifier.render(); // Render the reCAPTCHA
+                buttons.sendCode.disabled = true;
+                buttons.sendCode.textContent = 'Solve reCAPTCHA to Send';
+                buttons.sendCode.classList.add('bg-gray-500');
+                buttons.sendCode.classList.remove('bg-green-500');
+            } catch (error) {
+                console.error("Error initializing reCAPTCHA:", error);
+                document.getElementById('phone-auth-overlay').innerHTML += `<p class="text-red-500 text-xs mt-2">Could not load reCAPTCHA. Phone sign-in is disabled. ${error.message}</p>`;
+            }
+        }
+
+        /**
+         * Called when "Send Code" button is clicked.
+         */
+        async function onSignInSubmit() {
+            if (!recaptchaVerifier) {
+                console.error("reCAPTCHA not initialized.");
+                return;
+            }
+            
+            const phoneNumber = document.getElementById('phone-number-input').value;
+            if (!phoneNumber || phoneNumber.length < 10) {
+                alert("Please enter a valid phone number with country code.");
+                return;
+            }
+            
+            buttons.sendCode.disabled = true;
+            buttons.sendCode.textContent = 'Sending...';
+            
+            const appVerifier = recaptchaVerifier;
+
+            try {
+                confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+                // SMS sent. Show verification screen.
+                overlays.phoneAuth.classList.add('hidden');
+                overlays.phoneVerify.classList.remove('hidden');
+                document.getElementById('verification-code-message').textContent = `We sent a 6-digit code to ${phoneNumber}.`;
+                buttons.sendCode.disabled = false;
+                buttons.sendCode.textContent = 'Send Code';
+            } catch (error) {
+                console.error("Error sending SMS:", error);
+                alert(`Error sending code: ${error.message}`);
+                buttons.sendCode.disabled = false;
+                buttons.sendCode.textContent = 'Send Code';
+                // Reset reCAPTCHA
+                try {
+                    recaptchaVerifier.render().then(function(widgetId) {
+                        grecaptcha.reset(widgetId);
+                    });
+                } catch(e) { console.error("Error resetting recaptcha", e); }
+            }
+        }
+
+        /**
+         * Called when "Verify Code" button is clicked.
+         */
+        async function onVerifySubmit() {
+            const code = document.getElementById('verification-code-input').value;
+            if (!code || code.length !== 6) {
+                alert("Please enter the 6-digit code.");
+                return;
+            }
+            if (!confirmationResult) {
+                alert("Error: No confirmation result found. Please try again.");
+                showAuthOverlay();
+                return;
+            }
+
+            buttons.verifyCode.disabled = true;
+            buttons.verifyCode.textContent = 'Verifying...';
+
+            try {
+                const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, code);
+                // Now link this credential to the *current anonymous user*
+                await linkWithCredential(auth.currentUser, credential);
+                
+                // Success! onAuthStateChanged will now fire with the new, non-anonymous user.
+                // We can just show the loading screen while that happens.
+                overlays.phoneVerify.classList.add('hidden');
+                overlays.loading.classList.remove('hidden');
+                
+                buttons.verifyCode.disabled = false;
+                buttons.verifyCode.textContent = 'Verify & Sign In';
+            } catch (error) {
+                console.error("Error verifying code:", error);
+                if (error.code === 'auth/invalid-verification-code') {
+                    alert("Invalid code. Please try again.");
+                } else if (error.code === 'auth/credential-already-in-use') {
+                    alert("This phone number is already linked to another account.");
+                } else {
+                    alert(`Error: ${error.message}`);
+                }
+                buttons.verifyCode.disabled = false;
+                buttons.verifyCode.textContent = 'Verify & Sign In';
+            }
+        }
+
+        /**
+         * Resets phone auth flow and shows main auth overlay.
+         */
+        function showAuthOverlay() {
+            overlays.phoneAuth.classList.add('hidden');
+            overlays.phoneVerify.classList.add('hidden');
+            overlays.auth.classList.remove('hidden');
+            // We don't need to reset reCAPTCHA here,
+            // initRecaptcha() will be called again if they click 'Sign in with Phone'.
+        }
+        
+        // --- END: Phone Sign-In Functions ---
+
 
         async function loadUserProfile() {
             if (!userId) return;
@@ -695,13 +995,16 @@ const firebaseConfig ={
                     const data = docSnap.data();
                     userProfile.unlockedLevel = data.unlockedLevel || 'easy';
                     userProfile.highScores = { ...userProfile.highScores, ...data.highScores };
-                    userProfile.displayName = data.displayName || `User-${userId.substring(0, 6)}`;
-                    userProfile.profilePicUrl = data.profilePicUrl || '';
+                    userProfile.displayName = data.displayName || auth.currentUser.displayName || `User-${userId.substring(0, 6)}`;
+                    userProfile.profilePicUrl = data.profilePicUrl || auth.currentUser.photoURL || '';
                     userProfile.socialLinks = { ...userProfile.socialLinks, ...data.socialLinks };
                 } else {
-                    userProfile.displayName = `User-${userId.substring(0, 6)}`;
+                    // New user, use auth details if available
+                    userProfile.displayName = auth.currentUser.displayName || `User-${userId.substring(0, 6)}`;
+                    userProfile.profilePicUrl = auth.currentUser.photoURL || '';
                     await saveUserProfile(true);
                 }
+                // This is the key: after loading, go to the start screen
                 updateUIState('start');
                 setupLevelSelect();
             } catch (error) {
@@ -895,6 +1198,7 @@ const firebaseConfig ={
         // --- UI Functions ---
         function updateUIState(newState) {
             gameState = newState;
+            // Hide all overlays first
             Object.values(overlays).forEach(overlay => overlay.classList.add('hidden'));
             
             if (newState === 'loading') {
@@ -927,6 +1231,7 @@ const firebaseConfig ={
                 buttons.mainHeader.classList.remove('hidden');
                 buttons.mainFooter.classList.add('hidden');
             }
+            // Note: 'auth' state is handled manually in onAuthStateChanged
         }
 
         function setupLevelSelect() {
@@ -1062,7 +1367,7 @@ const firebaseConfig ={
                 },
                 flap() {
                     this.vy = this.config.flap;
-                    SoundManager.play('flap'); // NEW: Play flap sound
+                    SoundManager.play('flap'); // Play flap sound
                 }
             };
 
@@ -1130,7 +1435,7 @@ const firebaseConfig ={
                         if (!p.scored && p.x + this.width < bird.x) {
                             score++;
                             p.scored = true;
-                            SoundManager.play('score'); // NEW: Play score sound
+                            SoundManager.play('score'); // Play score sound
                         }
                         if (!bird.invincible) {
                             if (
@@ -1189,7 +1494,7 @@ const firebaseConfig ={
                             // Trigger booster text and sound
                             const text = `<h2 class="text-3xl font-bold text-yellow-300">YE MAIN AASMAAN KI UCHAIYO ME</h2>`;
                             animateTextOverlay(overlays.boosterText, text, '!bg-yellow-500/20 !border-yellow-400/50');
-                            SoundManager.play('booster'); // NEW: Play booster sound
+                            SoundManager.play('booster'); // Play booster sound
                         }
                         if (this.x + this.width < 0) {
                             this.active = false;
@@ -1240,7 +1545,7 @@ const firebaseConfig ={
             // Show "CHIDIYA UD" animation and play sound
             const startText = `<h2 class="text-6xl font-black text-white">CHIDIYA UD</h2>`;
             animateTextOverlay(overlays.gameStartText, startText);
-            SoundManager.play('start'); // NEW: Play start sound
+            SoundManager.play('start'); // Play start sound
 
             gameLoop();
         }
@@ -1272,7 +1577,7 @@ const firebaseConfig ={
         async function gameOver() {
             if (gameState === 'over' || gameState === 'paused') return;
             
-            SoundManager.play('crash'); // NEW: Play crash sound
+            SoundManager.play('crash'); // Play crash sound
             
             cancelAnimationFrame(gameLoopId);
             updateUIState('over');
@@ -1303,7 +1608,7 @@ const firebaseConfig ={
         }
 
         function handleFlap(e) {
-            if (!audioCtx) initAudio(); // NEW: Initialize audio on first user interaction
+            if (!audioCtx) initAudio(); // Initialize audio on first user interaction
             
             if (gameState === 'playing') {
                 bird.flap();
@@ -1375,15 +1680,17 @@ const firebaseConfig ={
         buttons.pauseToggle.addEventListener('click', togglePause);
         buttons.resumeOverlay.addEventListener('click', togglePause);
         
-        // --- NEW: Modal Control Functions ---
+        // --- Modal Control Functions ---
+
+        // (openSignInModal and closeSignInModal removed)
 
         function openLeaderboardModal() {
             listenForAllProfiles();
-            leaderboardModal.classList.remove('hidden');
+            modals.leaderboard.classList.remove('hidden');
         }
 
         function closeLeaderboardModal() {
-            leaderboardModal.classList.add('hidden');
+            modals.leaderboard.classList.add('hidden');
             if (unsubscribeFromProfiles) {
                 unsubscribeFromProfiles();
                 unsubscribeFromProfiles = null;
@@ -1393,16 +1700,39 @@ const firebaseConfig ={
 
         function openProfileModal() {
             renderMyProfile(); // Render profile view
-            profileModal.classList.remove('hidden');
+            modals.profile.classList.remove('hidden');
         }
 
         function closeProfileModal() {
-            profileModal.classList.add('hidden');
+            modals.profile.classList.add('hidden');
             isEditingProfile = false; // Always reset edit mode on close
             updateFooterTabs('game');
         }
 
         // --- NEW: Updated Event Listeners ---
+
+        // Auth Overlay Buttons
+        buttons.maybeLater.addEventListener('click', () => {
+            initAudio(); // Init audio context on user click
+            continueAsGuest();
+        });
+        buttons.googleSignIn.addEventListener('click', () => {
+            initAudio(); // Init audio context on user click
+            linkWithGoogle();
+        });
+        buttons.phoneSignIn.addEventListener('click', () => {
+            initAudio(); // Init audio context on user click
+            overlays.auth.classList.add('hidden');
+            overlays.phoneAuth.classList.remove('hidden');
+            initRecaptcha(); // Initialize reCAPTCHA when the overlay is shown
+        });
+
+        // Phone Auth Buttons
+        buttons.sendCode.addEventListener('click', onSignInSubmit);
+        buttons.verifyCode.addEventListener('click', onVerifySubmit);
+        buttons.backToAuth1.addEventListener('click', showAuthOverlay);
+        buttons.backToAuth2.addEventListener('click', showAuthOverlay);
+
 
         buttons.closeLeaderboardModal.addEventListener('click', closeLeaderboardModal);
         buttons.closeProfileModal.addEventListener('click', closeProfileModal);
@@ -1411,19 +1741,19 @@ const firebaseConfig ={
             if (gameState === 'over' || gameState === 'start') {
                  updateUIState('start');
             }
-            closeLeaderboardModal(); // Close either modal if open
+            closeLeaderboardModal(); // Close other modals
             closeProfileModal();
             updateFooterTabs('game');
         });
 
         buttons.footerStatsBtn.addEventListener('click', () => {
-            closeProfileModal(); // Close profile if open
+            closeProfileModal(); // Close other modals
             openLeaderboardModal();
             updateFooterTabs('stats');
         });
 
         buttons.footerProfileBtn.addEventListener('click', () => {
-            closeLeaderboardModal(); // Close stats if open
+            closeLeaderboardModal(); // Close other modals
             isEditingProfile = false; // Always open to view mode
             openProfileModal();
             updateFooterTabs('profile');
@@ -1435,7 +1765,4 @@ const firebaseConfig ={
 
     </script>
 </body>
-
 </html>
-
-
