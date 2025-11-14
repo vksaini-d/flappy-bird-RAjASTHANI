@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Flappy Bird</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>"> <!-- 1. Load Tailwind CSS --> <script src="https://cdn.tailwindcss.com"></script> <!-- 2. Load Google Font (Inter) --> <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path fill='%23facc15' d='M0 15 Q 15 0 30 15 L 25 15 Q 15 10 5 15 Z' /></svg>"> <!-- 1. Load Tailwind CSS --> <script src="https://cdn.tailwindcss.com"></script> <!-- 2. Load Google Font (Inter) --> <link rel="preconnect" href="https://fonts.googleapis.com">
     <!-- 1. Load Tailwind CSS (FIXED: Using pre-compiled CSS for better performance) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <!-- 2. Load Google Font (Inter) -->
@@ -22,6 +22,7 @@
             display: block;
             width: 100%;
             height: 100%;
+            cursor: pointer; /* Add pointer cursor to canvas */
         }
 
         /* Simple pulse animation for the title */
@@ -158,10 +159,16 @@
                                 <span>Sign in with Google</span>
                             </button>
                             
-                            <!-- NEW: Phone Sign-In Button -->
+                            <!-- Phone Sign-In Button -->
                             <button id="phone-sign-in-btn" class="w-full bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-blue-400 transition duration-200 flex items-center justify-center space-x-2">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"></path></svg>
                                 <span>Sign in with Phone</span>
+                            </button>
+
+                            <!-- NEW: Email Sign-In Button -->
+                            <button id="email-sign-in-btn" class="w-full bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-600 transition duration-200 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"></path></svg>
+                                <span>Sign in with Email</span>
                             </button>
                             
                             <button id="maybe-later-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
@@ -171,7 +178,37 @@
                     </div>
                 </div>
 
-                <!-- NEW: Phone Auth Overlay -->
+                <!-- NEW: Email Auth Overlay -->
+                <div id="email-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                    <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700">
+                        <h3 class="text-2xl font-bold text-white mb-6 text-center">Sign in with Email</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="email-input" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                                <input type="email" id="email-input" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-3 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" placeholder="you@example.com">
+                            </div>
+                            <div>
+                                <label for="password-input" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                                <input type="password" id="password-input" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-3 text-white focus:border-cyan-500 focus:ring focus:ring-cyan-500 focus:ring-opacity-50" placeholder="••••••••">
+                            </div>
+                            
+                            <div class="flex gap-4 pt-2">
+                                <button id="email-login-btn" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                    Login
+                                </button>
+                                <button id="email-signup-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg">
+                                    Create Account
+                                </button>
+                            </div>
+                            
+                            <button id="back-to-auth-btn-3" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg mt-4">
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phone Auth Overlay -->
                 <div id="phone-auth-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
                         <h3 class="text-2xl font-bold text-white mb-6">Sign in with Phone</h3>
@@ -194,7 +231,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: Phone Verify Overlay -->
+                <!-- Phone Verify Overlay -->
                 <div id="phone-verify-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
                     <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md flex flex-col border border-gray-700 text-center">
                         <h3 class="text-2xl font-bold text-white mb-6">Enter Verification Code</h3>
@@ -262,7 +299,7 @@
                 </div>
 
                 <!-- Booster Text Overlay (Structure only) -->
-                <div id="booster-text-overlay" class="game-text-overlay hidden">
+                <div id="booster-text-overlay" classs="game-text-overlay hidden">
                     <!-- Content injected by JS -->
                 </div>
 
@@ -365,7 +402,12 @@
             PhoneAuthProvider,
             RecaptchaVerifier,
             linkWithCredential,
-            signInWithCredential // ADDED FOR MERGE
+            signInWithCredential,
+            signInWithPopup, // NEW: For Google merge fix
+            // NEW: For Email Auth
+            EmailAuthProvider,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -384,7 +426,7 @@
         // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
         // You can get this from your Firebase Project Settings.
         // =======================================================================
-        const firebaseConfig =  {
+        const firebaseConfig = {
   apiKey: "AIzaSyAL24a2dCPn9w_WXVTo-mjlhwLkKbKtZUs",
   authDomain: "my-flappy-bird-game.firebaseapp.com",
   projectId: "my-flappy-bird-game",
@@ -440,6 +482,7 @@
         const overlays = {
             loading: document.getElementById('loading-overlay'),
             auth: document.getElementById('auth-overlay'), // This is the new root screen
+            emailAuth: document.getElementById('email-auth-overlay'), // NEW
             phoneAuth: document.getElementById('phone-auth-overlay'), // NEW
             phoneVerify: document.getElementById('phone-verify-overlay'), // NEW
             start: document.getElementById('start-overlay'),
@@ -478,13 +521,18 @@
             footerProfileBtn: document.getElementById('footer-profile-btn'),
             // Auth Overlay Buttons
             googleSignIn: document.getElementById('google-sign-in-btn'),
-            phoneSignIn: document.getElementById('phone-sign-in-btn'), // NEW
+            phoneSignIn: document.getElementById('phone-sign-in-btn'),
+            emailSignIn: document.getElementById('email-sign-in-btn'), // NEW
             maybeLater: document.getElementById('maybe-later-btn'),
-            // NEW: Phone Auth Buttons
+            // Phone Auth Buttons
             sendCode: document.getElementById('send-code-btn'),
             verifyCode: document.getElementById('verify-code-btn'),
             backToAuth1: document.getElementById('back-to-auth-btn-1'),
-            backToAuth2: document.getElementById('back-to-auth-btn-2')
+            backToAuth2: document.getElementById('back-to-auth-btn-2'),
+            // NEW: Email Auth Buttons
+            emailLogin: document.getElementById('email-login-btn'),
+            emailSignUp: document.getElementById('email-signup-btn'),
+            backToAuth3: document.getElementById('back-to-auth-btn-3')
         };
         
         const leaderboardList = document.getElementById('leaderboard-list');
@@ -795,7 +843,7 @@
                             buttons.mainFooter.classList.add('hidden');
                         } else {
                             // User is SIGNED IN. Load their profile and start the game.
-                            displays.userStatus.textContent = `${user.displayName || user.phoneNumber || 'User'}`;
+                            displays.userStatus.textContent = `${user.displayName || user.email || user.phoneNumber || 'User'}`;
                             // User is signed in, load profile and go to start screen
                             // FIX: Added try/catch here to handle load failures
                             try {
@@ -843,7 +891,7 @@
         }
 
 
-// Function to link anonymous account with Google
+        // Function to link anonymous account with Google
         // NEW: This is the full version with the account-merge fix
         async function linkWithGoogle() {
             // Guard clause to prevent error if auth isn't ready
@@ -884,7 +932,6 @@
 
                     try {
                         // 1. Sign in with the Google provider *freshly*. This signs OUT the anonymous user.
-                        const { signInWithPopup } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
                         const googleSignInResult = await signInWithPopup(auth, provider);
                         const googleUser = googleSignInResult.user; // This is the permanent user
 
@@ -935,26 +982,17 @@
                                 ...googleData, // Use Google user's display name, pic, etc. as base
                                 highScores: mergedHighScores,
                                 unlockedLevel: mergedUnlockedLevel,
-                                // Recalculate total points
                                 totalPoints: Object.values(mergedHighScores).reduce((a, b) => a + b, 0),
                                 lastUpdated: serverTimestamp()
                             };
 
                             // 6. Save the merged profile to the Google user's doc
                             await setDoc(googleProfileRef, mergedProfile);
-
-                            // 7. Delete the old anonymous profile doc
-                            // We comment this out, as it can fail with strict rules.
-                            // The orphaned doc is harmless.
-                            // await deleteDoc(anonProfileRef); 
-                            console.log("Data merged successfully. Old guest profile was not deleted, which is safe.");
                             
-                            // onAuthStateChanged will fire with the new Google user
-                            // and loadUserProfile will be called, loading the merged data.
+                            console.log("Data merged successfully. Old guest profile was not deleted, which is safe.");
                             
                         } else {
                             // Anonymous user had no data, just sign in with Google
-                            // onAuthStateChanged will handle this automatically
                             console.log("Anonymous user had no data to merge.");
                         }
 
@@ -1133,6 +1171,7 @@
         function showAuthOverlay() {
             overlays.phoneAuth.classList.add('hidden');
             overlays.phoneVerify.classList.add('hidden');
+            overlays.emailAuth.classList.add('hidden'); // NEW: Hide email overlay too
             overlays.auth.classList.remove('hidden');
             
             // Reset phone auth state
@@ -1149,9 +1188,153 @@
                 }
             }
             document.getElementById('recaptcha-container').innerHTML = '';
+
+            // NEW: Reset email auth state
+            document.getElementById('email-input').value = '';
+            document.getElementById('password-input').value = '';
         }
         
         // --- END: Phone Sign-In Functions ---
+
+
+        // --- NEW: Email Sign-In Functions ---
+
+        /**
+         * Handles the "Create Account" button click.
+         * Links the current anonymous account to a new Email/Password credential.
+         */
+        async function handleEmailSignUp() {
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
+
+            if (!email || !password) {
+                alert("Please enter both an email and a password.");
+                return;
+            }
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return;
+            }
+
+            overlays.emailAuth.classList.add('hidden');
+            overlays.loading.classList.remove('hidden');
+
+            try {
+                const credential = EmailAuthProvider.credential(email, password);
+                await linkWithCredential(auth.currentUser, credential);
+                // Success! onAuthStateChanged will fire, and the user will
+                // be non-anonymous. loadUserProfile will run.
+                console.log("Email account created and linked!");
+            } catch (error) {
+                console.error("Error signing up:", error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert("This email is already in use. Please 'Login' instead.");
+                } else if (error.code === 'auth/weak-password') {
+                    alert("Your password is too weak. Please choose a stronger password.");
+                } else {
+                    alert(`Error creating account: ${error.message}`);
+                }
+                overlays.loading.classList.add('hidden');
+                overlays.emailAuth.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Handles the "Login" button click.
+         * Signs in with Email/Password and merges the anonymous guest data.
+         */
+        async function handleEmailSignIn() {
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
+
+            if (!email || !password) {
+                alert("Please enter both an email and a password.");
+                return;
+            }
+
+            const anonymousUser = auth.currentUser; // Save the guest
+            
+            overlays.emailAuth.classList.add('hidden');
+            overlays.loading.classList.remove('hidden');
+
+            try {
+                // 1. Sign in with the email. This signs OUT the guest.
+                const emailSignInResult = await signInWithEmailAndPassword(auth, email, password);
+                const emailUser = emailSignInResult.user; // This is the permanent user
+
+                // 2. Get the anonymous user's data
+                const anonProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, anonymousUser.uid);
+                const anonDocSnap = await getDoc(anonProfileRef);
+
+                if (anonDocSnap.exists()) {
+                    const anonData = anonDocSnap.data();
+
+                    // 3. Get the permanent user's data
+                    const emailProfileRef = doc(db, `artifacts/${appId}/public/data/userProfiles`, emailUser.uid);
+                    const emailDocSnap = await getDoc(emailProfileRef);
+
+                    let emailData = {};
+                    if (emailDocSnap.exists()) {
+                        emailData = emailDocSnap.data();
+                    } else {
+                        // If the Email user has no profile, create a base one
+                        emailData = {
+                            unlockedLevel: 'easy',
+                            highScores: { easy: 0, difficult: 0, hard: 0, pro: 0, ultraLegend: 0 },
+                            displayName: emailUser.email, // Use email as display name
+                            profilePicUrl: '',
+                            socialLinks: { twitter: '', github: '' }
+                        };
+                    }
+
+                    // 4. Merge the data (highest scores win)
+                    const anonHighScores = anonData.highScores || {};
+                    const emailHighScores = emailData.highScores || { easy: 0, difficult: 0, hard: 0, pro: 0, ultraLegend: 0 };
+                    const mergedHighScores = { ...emailHighScores };
+
+                    for (const level of levelOrder) {
+                        const anonScore = anonHighScores[level] || 0;
+                        const emailScore = emailHighScores[level] || 0;
+                        mergedHighScores[level] = Math.max(anonScore, emailScore);
+                    }
+
+                    // Merge unlocked level (farthest level wins)
+                    const anonLevelIndex = levelOrder.indexOf(anonData.unlockedLevel || 'easy');
+                    const emailLevelIndex = levelOrder.indexOf(emailData.unlockedLevel || 'easy');
+                    const mergedUnlockedLevel = levelOrder[Math.max(anonLevelIndex, emailLevelIndex)];
+
+                    // 5. Create the final merged profile
+                    const mergedProfile = {
+                        ...emailData, // Use email user's data as base
+                        highScores: mergedHighScores,
+                        unlockedLevel: mergedUnlockedLevel,
+                        totalPoints: Object.values(mergedHighScores).reduce((a, b) => a + b, 0),
+                        lastUpdated: serverTimestamp()
+                    };
+
+                    // 6. Save the merged profile to the Email user's doc
+                    await setDoc(emailProfileRef, mergedProfile);
+                    console.log("Email sign-in successful and data merged.");
+
+                } else {
+                    console.log("Email sign-in successful. Anonymous user had no data to merge.");
+                }
+
+                // onAuthStateChanged will handle loading the profile
+
+            } catch (error) {
+                console.error("Error signing in with email:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    alert("Invalid email or password.");
+                } else {
+                    alert(`Error signing in: ${error.message}`);
+                }
+                overlays.loading.classList.add('hidden');
+                overlays.emailAuth.classList.remove('hidden');
+            }
+        }
+
+        // --- END: Email Sign-In Functions ---
 
 
         async function loadUserProfile() {
@@ -1172,12 +1355,13 @@
                     const data = docSnap.data();
                     userProfile.unlockedLevel = data.unlockedLevel || 'easy';
                     userProfile.highScores = { ...userProfile.highScores, ...data.highScores };
-                    userProfile.displayName = data.displayName || auth.currentUser.displayName || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
+                    // Get best display name from available data
+                    userProfile.displayName = data.displayName || auth.currentUser.displayName || auth.currentUser.email || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
                     userProfile.profilePicUrl = data.profilePicUrl || auth.currentUser.photoURL || '';
                     userProfile.socialLinks = { ...userProfile.socialLinks, ...data.socialLinks };
                 } else {
                     // New user, use auth details if available
-                    userProfile.displayName = auth.currentUser.displayName || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
+                    userProfile.displayName = auth.currentUser.displayName || auth.currentUser.email || auth.currentUser.phoneNumber || `User-${userId.substring(0, 6)}`;
                     userProfile.profilePicUrl = auth.currentUser.photoURL || '';
                     await saveUserProfile(true);
                 }
@@ -1841,13 +2025,20 @@
                 togglePause();
             }
         });
-        document.addEventListener('mousedown', (e) => handleFlap(e));
+
+        // --- NEW: Touch/Mouse Listeners on CANVAS for better compatibility ---
+        // This prevents interfering with UI buttons
+        canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent text selection on canvas
+            handleFlap(e);
+        });
         
-        // NEW: Fixed passive listener warning
-        document.addEventListener('touchstart', (e) => {
+        canvas.addEventListener('touchstart', (e) => {
+            // Prevent default touch behavior on canvas (like scrolling or zooming)
             e.preventDefault();
             handleFlap(e);
         }, { passive: false });
+
 
         buttons.restart.addEventListener('click', () => {
             startGame();
@@ -1907,12 +2098,23 @@
             overlays.phoneAuth.classList.remove('hidden');
             initRecaptcha(); // Initialize reCAPTCHA when the overlay is shown
         });
+        // NEW
+        buttons.emailSignIn.addEventListener('click', () => {
+            initAudio(); // Init audio context on user click
+            overlays.auth.classList.add('hidden');
+            overlays.emailAuth.classList.remove('hidden');
+        });
 
         // Phone Auth Buttons
         buttons.sendCode.addEventListener('click', onSignInSubmit);
         buttons.verifyCode.addEventListener('click', onVerifySubmit);
         buttons.backToAuth1.addEventListener('click', showAuthOverlay);
         buttons.backToAuth2.addEventListener('click', showAuthOverlay);
+        
+        // NEW: Email Auth Buttons
+        buttons.emailLogin.addEventListener('click', handleEmailSignIn);
+        buttons.emailSignUp.addEventListener('click', handleEmailSignUp);
+        buttons.backToAuth3.addEventListener('click', showAuthOverlay);
 
 
         buttons.closeLeaderboardModal.addEventListener('click', closeLeaderboardModal);
@@ -1947,5 +2149,3 @@
     </script>
 </body>
 </html>
-
-
